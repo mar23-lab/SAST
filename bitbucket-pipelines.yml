@@ -1,0 +1,219 @@
+# Bitbucket Pipelines - SAST Security Scanning
+# This file demonstrates how to integrate the CI/CD SAST Boilerplate with Bitbucket Pipelines
+
+image: atlassian/default-image:3
+
+definitions:
+  caches:
+    sast-tools: ~/.cache/sast
+  
+  services:
+    docker:
+      memory: 2048
+
+pipelines:
+  default:
+    - step:
+        name: SAST Security Scan
+        size: 2x # Use more memory for scanning
+        caches:
+          - sast-tools
+        script:
+          # Install SAST boilerplate
+          - curl -sSL https://raw.githubusercontent.com/xlooop-ai/SAST/main/scripts/install.sh | bash
+          
+          # Configure for Bitbucket
+          - export REPO_URL="https://bitbucket.org/${BITBUCKET_REPO_FULL_NAME}"
+          - export BITBUCKET_WORKSPACE="${BITBUCKET_WORKSPACE}"
+          - export BITBUCKET_REPO_SLUG="${BITBUCKET_REPO_SLUG}"
+          
+          # Run SAST scan
+          - ./sast scan --repo $REPO_URL --format sarif,json
+          
+          # Process results
+          - ./scripts/process_results.sh bitbucket
+          
+          # Generate reports
+          - ./sast report --format html --output sast-report.html
+        artifacts:
+          - sast-results.sarif
+          - sast-report.html
+          - sast-results/**
+        after-script:
+          # Send notifications even if scan fails
+          - ./scripts/send_notifications.sh "${BITBUCKET_BUILD_NUMBER}" || true
+
+  branches:
+    main:
+      - step:
+          name: Full Security Scan & Deploy
+          size: 2x
+          caches:
+            - sast-tools
+          script:
+            # Full comprehensive scan for main branch
+            - curl -sSL https://raw.githubusercontent.com/xlooop-ai/SAST/main/scripts/install.sh | bash
+            
+            # Configure environment
+            - export SAST_ENVIRONMENT="production"
+            - export SAST_STRICT_MODE="true"
+            - export REPO_URL="https://bitbucket.org/${BITBUCKET_REPO_FULL_NAME}"
+            
+            # Run comprehensive scan
+            - ./sast scan --full --strict --notify
+            
+            # Block deployment on critical vulnerabilities
+            - ./sast quality-gate --max-critical 0 --max-high 5
+            
+            # Update Grafana dashboard
+            - ./scripts/update_grafana.sh production
+          artifacts:
+            - sast-results.sarif
+            - sast-report.html
+            - sast-dashboard-url.txt
+          after-script:
+            - ./scripts/send_notifications.sh "main-${BITBUCKET_BUILD_NUMBER}" "production" || true
+
+    develop:
+      - step:
+          name: Development Security Scan
+          caches:
+            - sast-tools
+          script:
+            # Lighter scan for development branch
+            - curl -sSL https://raw.githubusercontent.com/xlooop-ai/SAST/main/scripts/install.sh | bash
+            
+            - export SAST_ENVIRONMENT="development"
+            - export REPO_URL="https://bitbucket.org/${BITBUCKET_REPO_FULL_NAME}"
+            
+            # Run development scan (more permissive)
+            - ./sast scan --quick --severity medium
+          artifacts:
+            - sast-results.json
+
+  pull-requests:
+    '**':
+      - step:
+          name: PR Security Check
+          caches:
+            - sast-tools
+          script:
+            # Install SAST tools
+            - curl -sSL https://raw.githubusercontent.com/xlooop-ai/SAST/main/scripts/install.sh | bash
+            
+            # Configure for PR scanning
+            - export REPO_URL="https://bitbucket.org/${BITBUCKET_REPO_FULL_NAME}"
+            - export PR_ID="${BITBUCKET_PR_ID}"
+            - export SOURCE_BRANCH="${BITBUCKET_BRANCH}"
+            - export TARGET_BRANCH="${BITBUCKET_PR_DESTINATION_BRANCH}"
+            
+            # Scan only changed files for faster feedback
+            - git fetch origin ${TARGET_BRANCH}
+            - ./sast scan --diff-only --base origin/${TARGET_BRANCH}
+            
+            # Comment on PR with results
+            - ./scripts/bitbucket_pr_comment.sh "${PR_ID}" || true
+            
+            # Set build status
+            - ./scripts/bitbucket_build_status.sh "${PR_ID}" || true
+          artifacts:
+            - sast-pr-results.json
+          after-script:
+            # Always update PR status
+            - ./scripts/bitbucket_pr_status.sh "${BITBUCKET_PR_ID}" "${BITBUCKET_EXIT_CODE}" || true
+
+  tags:
+    'v*':
+      - step:
+          name: Release Security Audit
+          size: 2x
+          caches:
+            - sast-tools
+          script:
+            # Comprehensive security audit for releases
+            - curl -sSL https://raw.githubusercontent.com/xlooop-ai/SAST/main/scripts/install.sh | bash
+            
+            - export SAST_ENVIRONMENT="production"
+            - export RELEASE_TAG="${BITBUCKET_TAG}"
+            - export REPO_URL="https://bitbucket.org/${BITBUCKET_REPO_FULL_NAME}"
+            
+            # Run comprehensive audit
+            - ./sast scan --comprehensive --compliance --tag ${RELEASE_TAG}
+            
+            # Generate compliance reports
+            - ./sast compliance-report --format pdf,json
+            
+            # Archive results
+            - ./sast archive --release ${RELEASE_TAG}
+          artifacts:
+            - sast-compliance-report.pdf
+            - sast-release-audit.json
+            - sast-results.sarif
+
+  custom:
+    # Manual security scan trigger
+    security-audit:
+      - step:
+          name: Manual Security Audit
+          trigger: manual
+          size: 2x
+          caches:
+            - sast-tools
+          script:
+            - echo "🔍 Running manual security audit..."
+            - curl -sSL https://raw.githubusercontent.com/xlooop-ai/SAST/main/scripts/install.sh | bash
+            
+            - export SAST_ENVIRONMENT="audit"
+            - export REPO_URL="https://bitbucket.org/${BITBUCKET_REPO_FULL_NAME}"
+            
+            # Comprehensive scan with all tools
+            - ./sast scan --all-scanners --verbose
+            
+            # Generate detailed reports
+            - ./sast report --detailed --format html,pdf,json
+          artifacts:
+            - sast-audit-report.html
+            - sast-audit-report.pdf
+            - sast-detailed-results.json
+
+    # Demo mode for testing
+    demo-scan:
+      - step:
+          name: Demo SAST Scan
+          trigger: manual
+          script:
+            - echo "🧪 Running SAST demo mode..."
+            - curl -sSL https://raw.githubusercontent.com/xlooop-ai/SAST/main/scripts/install.sh | bash
+            
+            # Run in demo mode
+            - ./run_demo.sh --scenario critical --component all
+            
+            # Show demo results
+            - cat demo-results/demo-report.md
+          artifacts:
+            - demo-results/**
+
+# Environment-specific configurations
+options:
+  docker: true
+  max-time: 30 # Maximum 30 minutes per step
+  
+# Clone configuration
+clone:
+  depth: full # Full history for better analysis
+
+# Global environment variables
+definitions:
+  environment: &default-environment
+    # SAST Configuration
+    SAST_CONFIG_FILE: "ci-config.yaml"
+    SAST_LOG_LEVEL: "INFO"
+    
+    # Bitbucket Integration
+    BITBUCKET_INTEGRATION: "true"
+    
+    # Notification settings (set in Repository Variables)
+    # SLACK_WEBHOOK: $SLACK_WEBHOOK
+    # EMAIL_SMTP_PASSWORD: $EMAIL_SMTP_PASSWORD  
+    # JIRA_API_TOKEN: $JIRA_API_TOKEN
+    # GRAFANA_API_KEY: $GRAFANA_API_KEY
