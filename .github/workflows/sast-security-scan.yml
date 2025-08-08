@@ -1,0 +1,145 @@
+name: SAST Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of scan to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - quick
+          - critical-only
+
+env:
+  # Load configuration from central config file
+  CONFIG_FILE: 'ci-config.yaml'
+
+jobs:
+  load-config:
+    runs-on: ubuntu-latest
+    outputs:
+      config: ${{ steps.parse-config.outputs.config }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Parse configuration
+        id: parse-config
+        run: |
+          # Install yq for YAML parsing
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          
+          # Parse config and set outputs
+          config=$(cat ci-config.yaml | yq -o=json)
+          echo "config=$config" >> $GITHUB_OUTPUT
+
+  sast-scan:
+    needs: load-config
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        scanner: ${{ fromJson(needs.load-config.outputs.config).sast.scanners }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup scan environment
+        run: |
+          config='${{ needs.load-config.outputs.config }}'
+          echo "SCAN_TYPE=${{ github.event.inputs.scan_type || 'full' }}" >> $GITHUB_ENV
+          echo "NOTIFICATIONS_ENABLED=$(echo $config | jq -r '.notifications.enabled')" >> $GITHUB_ENV
+          echo "SLACK_WEBHOOK=$(echo $config | jq -r '.integrations.slack.webhook_url')" >> $GITHUB_ENV
+
+      - name: CodeQL Analysis
+        if: matrix.scanner == 'codeql'
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ fromJson(needs.load-config.outputs.config).sast.languages }}
+          queries: ${{ fromJson(needs.load-config.outputs.config).sast.codeql.query_suites }}
+
+      - name: Perform CodeQL Analysis
+        if: matrix.scanner == 'codeql'
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
+
+      - name: Semgrep SAST Scan
+        if: matrix.scanner == 'semgrep'
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: ${{ fromJson(needs.load-config.outputs.config).sast.semgrep.rules }}
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Bandit Security Scan (Python)
+        if: matrix.scanner == 'bandit'
+        run: |
+          pip install bandit[toml]
+          bandit -r . -f json -o bandit-report.json || true
+
+      - name: ESLint Security Scan (JavaScript/TypeScript)
+        if: matrix.scanner == 'eslint'
+        run: |
+          npm install -g eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
+          eslint . --ext .js,.ts,.jsx,.tsx --format json --output-file eslint-report.json || true
+
+      - name: Upload SARIF results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ matrix.scanner }}-results.sarif
+        continue-on-error: true
+
+      - name: Process scan results
+        if: always()
+        run: |
+          chmod +x ./scripts/process_results.sh
+          ./scripts/process_results.sh "${{ matrix.scanner }}" "${{ env.SCAN_TYPE }}"
+
+  notify-results:
+    needs: [load-config, sast-scan]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Send notifications
+        if: fromJson(needs.load-config.outputs.config).notifications.enabled
+        run: |
+          chmod +x ./scripts/send_notifications.sh
+          ./scripts/send_notifications.sh "${{ needs.sast-scan.result }}"
+        env:
+          CONFIG_JSON: '${{ needs.load-config.outputs.config }}'
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          EMAIL_SMTP_PASSWORD: ${{ secrets.EMAIL_SMTP_PASSWORD }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
+
+  update-dashboard:
+    needs: [load-config, sast-scan]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Update Grafana dashboard
+        if: fromJson(needs.load-config.outputs.config).integrations.grafana.enabled
+        run: |
+          chmod +x ./scripts/update_grafana.sh
+          ./scripts/update_grafana.sh "${{ needs.sast-scan.result }}"
+        env:
+          CONFIG_JSON: '${{ needs.load-config.outputs.config }}'
+          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}

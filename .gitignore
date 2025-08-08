@@ -1,0 +1,333 @@
+# CI/CD SAST Boilerplate - .gitignore
+
+# ===================================================================
+# Security & Secrets - NEVER commit these
+# ===================================================================
+*.key
+*.pem
+*.p12
+*.pfx
+.env
+.env.local
+.env.production
+.env.staging
+secrets.yaml
+secrets.json
+**/secrets/
+**/*secret*
+**/*password*
+**/*token*
+.secrets/
+
+# Backup configuration files with sensitive data
+ci-config.yaml.backup
+ci-config.yaml.local
+ci-config.yaml.prod
+*.config.local.*
+
+# ===================================================================
+# SAST Scanner Results & Reports
+# ===================================================================
+sast-results/
+scan-results/
+security-reports/
+*.sarif
+*.security.json
+bandit-report.json
+eslint-report.json
+semgrep-results.json
+codeql-results.sarif
+
+# Demo mode results
+demo-results/
+demo-report.md
+*.demo.json
+
+# ===================================================================
+# Logs & Debug Files
+# ===================================================================
+*.log
+logs/
+debug/
+*.debug
+*.trace
+
+# CI/CD logs
+workflow-logs/
+pipeline-logs/
+github-output.txt
+
+# ===================================================================
+# Operating System Files
+# ===================================================================
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ===================================================================
+# Development Tools
+# ===================================================================
+
+# IDEs
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# Editors
+.sublime-project
+.sublime-workspace
+*.code-workspace
+
+# ===================================================================
+# Language-Specific
+# ===================================================================
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+package-lock.json
+yarn.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.conda/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+vendor/
+
+# C/C++
+*.o
+*.a
+*.lib
+*.dll
+*.exe
+*.out
+*.app
+
+# ===================================================================
+# Package Managers & Dependencies
+# ===================================================================
+
+# npm
+node_modules/
+.npm/
+.eslintcache
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Composer
+vendor/
+composer.lock
+
+# Bundler
+.bundle/
+vendor/bundle/
+
+# ===================================================================
+# Testing & Coverage
+# ===================================================================
+coverage/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+.tox/
+.nox/
+htmlcov/
+.coverage
+.nyc_output
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jest
+/coverage/
+/build/
+
+# ===================================================================
+# Temporary & Cache Files
+# ===================================================================
+tmp/
+temp/
+.tmp/
+.temp/
+cache/
+.cache/
+*.tmp
+*.temp
+*.bak
+*.backup
+*.orig
+
+# Compilation artifacts
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Archives
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ===================================================================
+# Cloud & Infrastructure
+# ===================================================================
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+terraform.tfvars.json
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+.docker/
+
+# Kubernetes
+*.kubeconfig
+kustomization.yaml
+
+# AWS
+.aws/
+aws-exports.js
+
+# ===================================================================
+# Documentation Build Artifacts
+# ===================================================================
+docs/_build/
+docs/build/
+site/
+.sphinx/
+
+# GitBook
+_book/
+
+# ===================================================================
+# Specific to this project
+# ===================================================================
+
+# Custom scanner outputs
+custom-scan-results/
+*.custom.json
+
+# Integration test artifacts
+integration-test-results/
+webhook-test-logs/
+
+# Demo mode artifacts that should be cleaned up
+demo-webhook-calls.log
+demo-notifications.json
+
+# Local development overrides
+local-config/
+dev-overrides/
+
+# Grafana exports
+grafana-backup/
+*.grafana.json
+
+# Report archives
+archived-reports/
+historical-scans/
+
+# Performance benchmarks
+benchmark-results/
+*.benchmark
+
+# ===================================================================
+# Version Control
+# ===================================================================
+.git/
+.gitkeep
+
+# Backup files from package manager
+package-lock.json.backup
+yarn.lock.backup
