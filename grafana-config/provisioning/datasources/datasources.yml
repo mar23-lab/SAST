@@ -1,0 +1,48 @@
+apiVersion: 1
+
+datasources:
+  # Prometheus datasource
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.47.0
+      cacheLevel: 'High'
+      disableRecordingRules: false
+      incrementalQueryOverlapWindow: 10m
+
+  # InfluxDB datasource
+  - name: InfluxDB
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    database: sast-metrics
+    user: admin
+    secureJsonData:
+      password: adminpass123
+    jsonData:
+      version: Flux
+      organization: sast-org
+      defaultBucket: sast-metrics
+      maxSeries: 1000
+    editable: true
+
+  # InfluxDB v2 datasource
+  - name: InfluxDB-v2
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    jsonData:
+      version: Flux
+      organization: sast-org
+      defaultBucket: sast-metrics
+      maxSeries: 1000
+    secureJsonData:
+      token: sast-admin-token-12345
+    editable: true
