@@ -1,0 +1,65 @@
+FROM ubuntu:22.04
+
+# Установка базовых зависимостей
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    jq \
+    python3 \
+    python3-pip \
+    nodejs \
+    npm \
+    build-essential \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка yq для работы с YAML
+RUN wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
+    && chmod +x /usr/local/bin/yq
+
+# Установка Docker CLI
+RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
+    && apt-get update \
+    && apt-get install -y docker-ce-cli \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка инструментов безопасности
+RUN pip3 install --no-cache-dir \
+    bandit \
+    semgrep \
+    safety \
+    influxdb-client
+
+# Установка ESLint и security плагинов
+RUN npm install -g \
+    eslint \
+    @typescript-eslint/parser \
+    @typescript-eslint/eslint-plugin \
+    eslint-plugin-security \
+    eslint-plugin-no-secrets
+
+# Создание рабочей директории
+WORKDIR /app
+
+# Копирование конфигурационных файлов
+COPY configs/ ./configs/
+COPY scripts/ ./scripts/
+COPY ci-config.yaml ./
+COPY run_demo.sh ./
+
+# Установка прав на выполнение
+RUN chmod +x ./scripts/*.sh ./run_demo.sh
+
+# Создание директорий для результатов
+RUN mkdir -p ./sast-results ./demo-results
+
+# Переменные окружения
+ENV PATH="/usr/local/bin:$PATH"
+ENV PYTHONPATH="/app"
+
+# Основная команда
+CMD ["bash", "-c", "while true; do sleep 30; done"]

@@ -1,0 +1,141 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # SAST Scanner Logs
+  - job_name: sast-scanners
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: sast-scanners
+          __path__: /app/logs/*.log
+
+    pipeline_stages:
+      # Parse SAST log format
+      - regex:
+          expression: '(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z) (?P<level>\w+) (?P<scanner>\w+) (?P<message>.*)'
+      
+      # Extract scanner type
+      - labels:
+          level:
+          scanner:
+      
+      # Add severity labels for alerts
+      - match:
+          selector: '{job="sast-scanners"}'
+          stages:
+            - regex:
+                expression: '.*(?P<severity>critical|high|medium|low).*'
+            - labels:
+                severity:
+
+  # Docker Container Logs
+  - job_name: docker-containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+        filters:
+          - name: label
+            values: ["logging=promtail"]
+
+    relabel_configs:
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'logstream'
+      - source_labels: ['__meta_docker_container_label_logging_jobname']
+        target_label: 'job'
+
+    pipeline_stages:
+      # Parse JSON logs if present
+      - json:
+          expressions:
+            level: level
+            timestamp: timestamp
+            message: message
+      
+      # Add container labels
+      - labels:
+          level:
+          logstream:
+
+  # System Logs (if needed)
+  - job_name: system-logs
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: system-logs
+          __path__: /var/log/*.log
+
+    pipeline_stages:
+      - match:
+          selector: '{job="system-logs"}'
+          stages:
+            - regex:
+                expression: '(?P<timestamp>\w{3}\s+\d{1,2}\s+\d{2}:\d{2}:\d{2}) (?P<host>\S+) (?P<process>\S+): (?P<message>.*)'
+            - labels:
+                host:
+                process:
+
+  # SAST Results Logs
+  - job_name: sast-results
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: sast-results
+          __path__: /app/logs/results/*.json
+
+    pipeline_stages:
+      # Parse SAST result JSON
+      - json:
+          expressions:
+            scanner: scanner
+            status: status
+            vulnerabilities: total_vulnerabilities
+            timestamp: timestamp
+      
+      # Extract vulnerability counts
+      - json:
+          expressions:
+            critical: total_vulnerabilities.critical
+            high: total_vulnerabilities.high
+            medium: total_vulnerabilities.medium
+            low: total_vulnerabilities.low
+          source: vulnerabilities
+      
+      # Create labels for filtering
+      - labels:
+          scanner:
+          status:
+      
+      # Create metrics from logs
+      - metrics:
+          sast_log_vulnerabilities_total:
+            type: Counter
+            description: "Total vulnerabilities found from logs"
+            source: critical
+            config:
+              action: add
+              value: "{{ .critical }}"
+              match_all: true
+
+      # Alert on high vulnerability counts
+      - match:
+          selector: '{job="sast-results"} |= "critical"'
+          stages:
+            - template:
+                source: critical_count
+                template: '{{ .critical }}'
+            - labels:
+                alert_level: critical

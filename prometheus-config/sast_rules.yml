@@ -1,0 +1,57 @@
+groups:
+  - name: sast_security_alerts
+    rules:
+      # Алерт на критические уязвимости
+      - alert: CriticalVulnerabilitiesFound
+        expr: sast_vulnerabilities_total{severity="critical"} > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: security
+        annotations:
+          summary: "Критические уязвимости обнаружены в {{ $labels.repository }}"
+          description: "Найдено {{ $value }} критических уязвимостей в репозитории {{ $labels.repository }}"
+
+      # Алерт на высокоприоритетные уязвимости
+      - alert: HighVulnerabilitiesThresholdExceeded
+        expr: sast_vulnerabilities_total{severity="high"} > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Превышен порог высокоприоритетных уязвимостей"
+          description: "Найдено {{ $value }} высокоприоритетных уязвимостей в {{ $labels.repository }} (порог: 5)"
+
+      # Алерт на неудачное сканирование
+      - alert: SASTScanFailed
+        expr: sast_scan_status == 0
+        for: 1m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "SAST сканирование завершилось неудачно"
+          description: "Сканирование безопасности для {{ $labels.repository }} завершилось ошибкой"
+
+      # Алерт на долгое сканирование
+      - alert: SASTScanTooSlow
+        expr: sast_scan_duration_seconds > 1800  # 30 минут
+        for: 0m
+        labels:
+          severity: info
+          team: devops
+        annotations:
+          summary: "SAST сканирование выполняется слишком долго"
+          description: "Сканирование {{ $labels.repository }} длится уже {{ $value }} секунд"
+
+      # Алерт на рост количества уязвимостей
+      - alert: VulnerabilityTrendIncreasing
+        expr: increase(sast_vulnerabilities_total[24h]) > 10
+        for: 10m
+        labels:
+          severity: warning
+          team: security
+        annotations:
+          summary: "Растущий тренд уязвимостей"
+          description: "За последние 24 часа в {{ $labels.repository }} обнаружено {{ $value }} новых уязвимостей"
