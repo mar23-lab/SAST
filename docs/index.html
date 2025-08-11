@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAST Security Dashboard - Live Demo</title>
+    <meta name="description" content="Live demonstration of Universal SAST Boilerplate security dashboard">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE2IDNMMTkuMDkgMTAuMjZMMjcgMTBMMjEgMTZMMjcgMjJMMTkuMDkgMjEuNzRMMTYgMjlMMTIuOTEgMjEuNzRMNSAyMkwxMSAxNkw1IDEwTDEyLjkxIDEwLjI2TDE2IDNaIiBmaWxsPSIjMDk2OWRhIi8+Cjwvc3ZnPg==" type="image/svg+xml">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #0969da;
+            --success-color: #1a7f37;
+            --warning-color: #d1242f;
+            --medium-color: #fb8500;
+            --low-color: #d4a72c;
+            --background-color: #f6f8fa;
+            --card-background: #ffffff;
+            --text-primary: #24292f;
+            --text-secondary: #656d76;
+            --border-color: #d0d7de;
+            --border-radius: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #8250df);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+
+        .demo-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+        }
+
+        .demo-badge::before {
+            content: "🧪";
+            margin-right: 8px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border-left: 4px solid;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .metric-card.critical {
+            border-left-color: var(--warning-color);
+        }
+
+        .metric-card.high {
+            border-left-color: var(--medium-color);
+        }
+
+        .metric-card.medium {
+            border-left-color: var(--low-color);
+        }
+
+        .metric-card.low {
+            border-left-color: var(--success-color);
+        }
+
+        .metric-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .metric-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .metric-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            position: relative;
+        }
+
+        .metric-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 12px;
+        }
+
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .trend-icon {
+            margin-right: 4px;
+        }
+
+        .trend-down {
+            color: var(--success-color);
+        }
+
+        .trend-up {
+            color: var(--warning-color);
+        }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-card {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .scanners-section {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .scanners-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .scanner-card {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .scanner-card:hover {
+            border-color: var(--primary-color);
+            background: white;
+        }
+
+        .scanner-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .scanner-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .scanner-status.active {
+            background: #dafbe1;
+            color: var(--success-color);
+        }
+
+        .scanner-metrics {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .activity-section {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .activity-list {
+            margin-top: 16px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--background-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-size: 0.875rem;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .activity-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .footer {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            text-align: center;
+            margin-top: 30px;
+            color: var(--text-secondary);
+            box-shadow: var(--shadow);
+        }
+
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .live-indicator {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 8px;
+            height: 8px;
+            background: var(--success-color);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.2); }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .loading-overlay.hidden {
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            text-align: center;
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-text">
+            <div class="spinner"></div>
+            <p>Loading security dashboard...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔒 SAST Security Dashboard</h1>
+            <p>Universal SAST Boilerplate - Live Demo</p>
+            <div class="demo-badge">
+                Live Demo with Mock Data
+            </div>
+        </div>
+
+        <!-- Security Metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card critical">
+                <div class="live-indicator"></div>
+                <div class="metric-header">
+                    <div class="metric-title">Critical</div>
+                    <div class="metric-icon">🚨</div>
+                </div>
+                <div class="metric-value" id="critical-count">0</div>
+                <div class="metric-description">Immediate Action Required</div>
+                <div class="metric-trend trend-down">
+                    <span class="trend-icon">↓</span>
+                    <span>-2 from last week</span>
+                </div>
+            </div>
+
+            <div class="metric-card high">
+                <div class="live-indicator"></div>
+                <div class="metric-header">
+                    <div class="metric-title">High Priority</div>
+                    <div class="metric-icon">⚠️</div>
+                </div>
+                <div class="metric-value" id="high-count">3</div>
+                <div class="metric-description">Address Within 24h</div>
+                <div class="metric-trend trend-down">
+                    <span class="trend-icon">↓</span>
+                    <span>-1 from last week</span>
+                </div>
+            </div>
+
+            <div class="metric-card medium">
+                <div class="live-indicator"></div>
+                <div class="metric-header">
+                    <div class="metric-title">Medium</div>
+                    <div class="metric-icon">📋</div>
+                </div>
+                <div class="metric-value" id="medium-count">7</div>
+                <div class="metric-description">Plan Remediation</div>
+                <div class="metric-trend trend-up">
+                    <span class="trend-icon">↑</span>
+                    <span>+2 from last week</span>
+                </div>
+            </div>
+
+            <div class="metric-card low">
+                <div class="live-indicator"></div>
+                <div class="metric-header">
+                    <div class="metric-title">Low</div>
+                    <div class="metric-icon">ℹ️</div>
+                </div>
+                <div class="metric-value" id="low-count">12</div>
+                <div class="metric-description">Monitor & Track</div>
+                <div class="metric-trend">
+                    <span class="trend-icon">→</span>
+                    <span>No change</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts-section">
+            <div class="chart-card">
+                <div class="chart-title">📈 Security Trends (30 Days)</div>
+                <canvas id="trendChart" width="600" height="300"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-title">🔍 Scanner Distribution</div>
+                <canvas id="scannerChart" width="300" height="300"></canvas>
+            </div>
+        </div>
+
+        <!-- Scanners Status -->
+        <div class="scanners-section">
+            <div class="chart-title">🛡️ Active Security Scanners</div>
+            <div class="scanners-grid">
+                <div class="scanner-card">
+                    <div class="scanner-name">CodeQL</div>
+                    <div class="scanner-status active">Active</div>
+                    <div class="scanner-metrics">Issues: 5 | Runtime: 2m 34s</div>
+                </div>
+                <div class="scanner-card">
+                    <div class="scanner-name">Semgrep</div>
+                    <div class="scanner-status active">Active</div>
+                    <div class="scanner-metrics">Issues: 8 | Runtime: 1m 12s</div>
+                </div>
+                <div class="scanner-card">
+                    <div class="scanner-name">Bandit</div>
+                    <div class="scanner-status active">Active</div>
+                    <div class="scanner-metrics">Issues: 4 | Runtime: 45s</div>
+                </div>
+                <div class="scanner-card">
+                    <div class="scanner-name">ESLint Security</div>
+                    <div class="scanner-status active">Active</div>
+                    <div class="scanner-metrics">Issues: 5 | Runtime: 1m 8s</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="activity-section">
+            <div class="chart-title">📊 Recent Security Events</div>
+            <div class="activity-list">
+                <div class="activity-item">
+                    <div class="activity-icon">🔍</div>
+                    <div class="activity-content">
+                        <div class="activity-title">SAST scan completed successfully</div>
+                        <div class="activity-time">2 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">⚠️</div>
+                    <div class="activity-content">
+                        <div class="activity-title">3 high-priority vulnerabilities detected</div>
+                        <div class="activity-time">15 minutes ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">✅</div>
+                    <div class="activity-content">
+                        <div class="activity-title">2 critical issues resolved</div>
+                        <div class="activity-time">1 hour ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <div class="activity-icon">🚀</div>
+                    <div class="activity-content">
+                        <div class="activity-title">Security dashboard updated</div>
+                        <div class="activity-time">3 hours ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Last Updated:</strong> <span id="last-updated"></span></p>
+            <p>Powered by <a href="https://github.com/mar23-lab/SAST" target="_blank">Universal SAST Boilerplate</a></p>
+            <p><a href="https://github.com/mar23-lab/SAST" target="_blank">View Repository</a> | 
+               <a href="mailto:security@example.com">Security Contact</a> | 
+               <a href="#" onclick="refreshData()">Refresh Data</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Mock security data
+        const securityData = {
+            vulnerabilities: {
+                critical: 0,
+                high: 3,
+                medium: 7,
+                low: 12
+            },
+            trends: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                critical: [4, 2, 1, 0],
+                high: [8, 6, 4, 3],
+                medium: [12, 10, 8, 7],
+                low: [15, 14, 13, 12]
+            },
+            scanners: {
+                codeql: { issues: 5, runtime: '2m 34s' },
+                semgrep: { issues: 8, runtime: '1m 12s' },
+                bandit: { issues: 4, runtime: '45s' },
+                eslint: { issues: 5, runtime: '1m 8s' }
+            }
+        };
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Initializing SAST Security Dashboard...');
+            
+            // Show loading for realistic effect
+            setTimeout(() => {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+                loadDashboardData();
+                setupCharts();
+                startAutoRefresh();
+            }, 2000);
+            
+            // Update timestamp
+            updateTimestamp();
+        });
+
+        function loadDashboardData() {
+            // Animate counter updates
+            animateCounter('critical-count', securityData.vulnerabilities.critical);
+            animateCounter('high-count', securityData.vulnerabilities.high);
+            animateCounter('medium-count', securityData.vulnerabilities.medium);
+            animateCounter('low-count', securityData.vulnerabilities.low);
+            
+            console.log('✅ Security data loaded with mock data');
+        }
+
+        function animateCounter(elementId, targetValue) {
+            const element = document.getElementById(elementId);
+            const duration = 2000;
+            const startTime = performance.now();
+            const startValue = 0;
+
+            function updateCounter(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const currentValue = Math.floor(startValue + (targetValue - startValue) * progress);
+                
+                element.textContent = currentValue;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateCounter);
+                }
+            }
+            
+            requestAnimationFrame(updateCounter);
+        }
+
+        function setupCharts() {
+            // Trend chart
+            const trendCtx = document.getElementById('trendChart').getContext('2d');
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: securityData.trends.labels,
+                    datasets: [{
+                        label: 'Critical',
+                        data: securityData.trends.critical,
+                        borderColor: '#d1242f',
+                        backgroundColor: 'rgba(209, 36, 47, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'High',
+                        data: securityData.trends.high,
+                        borderColor: '#fb8500',
+                        backgroundColor: 'rgba(251, 133, 0, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Medium',
+                        data: securityData.trends.medium,
+                        borderColor: '#d4a72c',
+                        backgroundColor: 'rgba(212, 167, 44, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Low',
+                        data: securityData.trends.low,
+                        borderColor: '#1a7f37',
+                        backgroundColor: 'rgba(26, 127, 55, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+
+            // Scanner distribution chart
+            const scannerCtx = document.getElementById('scannerChart').getContext('2d');
+            new Chart(scannerCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['CodeQL', 'Semgrep', 'Bandit', 'ESLint'],
+                    datasets: [{
+                        data: [5, 8, 4, 5],
+                        backgroundColor: [
+                            '#0969da',
+                            '#8250df',
+                            '#1a7f37',
+                            '#d1242f'
+                        ],
+                        borderWidth: 0,
+                        hoverBorderWidth: 2,
+                        hoverBorderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.label + ': ' + context.parsed + ' issues';
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+            
+            console.log('📊 Charts initialized with mock data');
+        }
+
+        function updateTimestamp() {
+            document.getElementById('last-updated').textContent = new Date().toLocaleString();
+        }
+
+        function refreshData() {
+            console.log('🔄 Refreshing dashboard data...');
+            
+            // Show brief loading
+            const originalText = document.getElementById('last-updated').textContent;
+            document.getElementById('last-updated').textContent = 'Refreshing...';
+            
+            setTimeout(() => {
+                // Simulate small data changes
+                securityData.vulnerabilities.medium += Math.floor(Math.random() * 3) - 1;
+                securityData.vulnerabilities.low += Math.floor(Math.random() * 5) - 2;
+                
+                // Keep numbers positive
+                securityData.vulnerabilities.medium = Math.max(0, securityData.vulnerabilities.medium);
+                securityData.vulnerabilities.low = Math.max(0, securityData.vulnerabilities.low);
+                
+                loadDashboardData();
+                updateTimestamp();
+                
+                console.log('✅ Dashboard data refreshed');
+            }, 1000);
+        }
+
+        function startAutoRefresh() {
+            // Auto-refresh every 5 minutes
+            setInterval(() => {
+                console.log('🔄 Auto-refreshing dashboard...');
+                refreshData();
+            }, 300000);
+        }
+
+        // Add some interactive behaviors
+        document.querySelectorAll('.metric-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const title = this.querySelector('.metric-title').textContent;
+                console.log(`📊 Clicked on ${title} metric`);
+                
+                // Add visual feedback
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+        });
+
+        console.log('🎉 SAST Security Dashboard loaded successfully!');
+        console.log('📊 This is a live demo with realistic mock data');
+        console.log('🔗 Repository: https://github.com/mar23-lab/SAST');
+    </script>
+</body>
+</html>

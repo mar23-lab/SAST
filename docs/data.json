@@ -1,0 +1,97 @@
+{
+  "lastUpdated": "2025-08-11T15:58:00Z",
+  "vulnerabilities": {
+    "critical": 0,
+    "high": 3,
+    "medium": 7,
+    "low": 12,
+    "total": 22
+  },
+  "trends": {
+    "thisWeek": {
+      "critical": 0,
+      "high": 3,
+      "medium": 7,
+      "low": 12
+    },
+    "lastWeek": {
+      "critical": 2,
+      "high": 4,
+      "medium": 5,
+      "low": 14
+    },
+    "change": {
+      "critical": -2,
+      "high": -1,
+      "medium": 2,
+      "low": -2
+    }
+  },
+  "scanners": {
+    "codeql": {
+      "status": "active",
+      "issues": 5,
+      "runtime": "2m 34s",
+      "lastRun": "2025-08-11T15:56:00Z",
+      "coverage": "85%"
+    },
+    "semgrep": {
+      "status": "active",
+      "issues": 8,
+      "runtime": "1m 12s",
+      "lastRun": "2025-08-11T15:56:00Z",
+      "coverage": "92%"
+    },
+    "bandit": {
+      "status": "active",
+      "issues": 4,
+      "runtime": "45s",
+      "lastRun": "2025-08-11T15:56:00Z",
+      "coverage": "78%"
+    },
+    "eslint": {
+      "status": "active",
+      "issues": 5,
+      "runtime": "1m 8s",
+      "lastRun": "2025-08-11T15:56:00Z",
+      "coverage": "88%"
+    }
+  },
+  "recentActivity": [
+    {
+      "type": "scan_completed",
+      "message": "SAST scan completed successfully",
+      "timestamp": "2025-08-11T15:56:00Z",
+      "icon": "🔍"
+    },
+    {
+      "type": "vulnerabilities_detected",
+      "message": "3 high-priority vulnerabilities detected",
+      "timestamp": "2025-08-11T15:41:00Z",
+      "icon": "⚠️"
+    },
+    {
+      "type": "issues_resolved",
+      "message": "2 critical issues resolved",
+      "timestamp": "2025-08-11T14:58:00Z",
+      "icon": "✅"
+    },
+    {
+      "type": "dashboard_updated",
+      "message": "Security dashboard updated",
+      "timestamp": "2025-08-11T12:58:00Z",
+      "icon": "🚀"
+    }
+  ],
+  "compliance": {
+    "score": 87,
+    "frameworks": ["SOC2", "PCI-DSS", "GDPR"],
+    "lastAudit": "2025-08-10T00:00:00Z"
+  },
+  "repository": {
+    "name": "Universal SAST Boilerplate",
+    "url": "https://github.com/mar23-lab/SAST",
+    "branch": "main",
+    "lastCommit": "2025-08-11T15:58:00Z"
+  }
+}

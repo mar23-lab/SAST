@@ -1,5 +1,5 @@
 services:
-  # InfluxDB - временная база данных для метрик
+  # InfluxDB - Time series database for metrics
   influxdb:
     image: influxdb:2.7
     container_name: sast-influxdb
@@ -18,7 +18,7 @@ services:
     networks:
       - sast-network
 
-  # Grafana - дашборд для визуализации
+  # Grafana - Dashboard for visualization
   grafana:
     image: grafana/grafana:10.2.0
     container_name: sast-grafana
@@ -38,7 +38,7 @@ services:
     networks:
       - sast-network
 
-  # Prometheus - сбор метрик (альтернатива InfluxDB)
+  # Prometheus - Metrics collection (alternative to InfluxDB)
   prometheus:
     image: prom/prometheus:v2.47.0
     container_name: sast-prometheus
@@ -57,7 +57,7 @@ services:
     networks:
       - sast-network
 
-  # Pushgateway - для отправки метрик в Prometheus
+  # Pushgateway - For pushing metrics to Prometheus
   pushgateway:
     image: prom/pushgateway:v1.6.2
     container_name: sast-pushgateway
@@ -66,7 +66,7 @@ services:
     networks:
       - sast-network
 
-  # MailHog - для тестирования email уведомлений
+  # MailHog - For testing email notifications
   mailhog:
     image: mailhog/mailhog:v1.0.1
     container_name: sast-mailhog
@@ -81,7 +81,7 @@ services:
     networks:
       - sast-network
 
-  # SAST Scanner Service - основной сервис для запуска сканирования
+  # SAST Scanner Service - Main service for running scans
   sast-runner:
     build:
       context: .

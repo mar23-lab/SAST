@@ -1,7 +1,7 @@
 apiVersion: 1
 
 providers:
-  # Dashboard provider для автоматической загрузки дашбордов
+  # Dashboard provider for automatic dashboard loading
   - name: 'sast-dashboards'
     orgId: 1
     folder: 'SAST Security'
