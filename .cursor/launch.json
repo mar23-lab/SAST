@@ -1,0 +1,113 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug: Language Detector",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/language-detector.py",
+      "args": [
+        "--repo", "https://github.com/OWASP/NodeGoat",
+        "--verbose"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Debug: Email Setup Wizard",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/email_setup_wizard.py",
+      "args": [
+        "--config", "ci-config.yaml",
+        "--demo"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Debug: Integration Tester",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/integration-tester.py",
+      "args": [
+        "--config", "ci-config.yaml",
+        "--test-all"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Debug: Results Processor",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/process_results.py",
+      "args": [
+        "--config", "ci-config.yaml",
+        "--scanner", "semgrep",
+        "--demo"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Debug: InfluxDB Integration",
+      "type": "python",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/influxdb_integration.py",
+      "args": [
+        "--config", "ci-config.yaml",
+        "--test-connection"
+      ],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Debug: Current Python File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}"
+      },
+      "justMyCode": false
+    },
+    {
+      "name": "Attach to Docker: SAST Runner",
+      "type": "python",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5678
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "/app"
+        }
+      ]
+    }
+  ]
+}

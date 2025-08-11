@@ -1,0 +1,133 @@
+{
+  "cursor.general.enableAutoCompletion": true,
+  "cursor.general.enableCopilot": true,
+  "cursor.chat.enabled": true,
+  
+  "files.associations": {
+    "*.yml": "yaml",
+    "*.yaml": "yaml",
+    "ci-config.yaml": "yaml",
+    "docker-compose*.yml": "yaml",
+    "*.sh": "shellscript",
+    ".eslintrc*": "json",
+    "Dockerfile*": "dockerfile"
+  },
+  
+  "yaml.schemas": {
+    "./ci-config.yaml": ["ci-config.yaml", "ci-config-*.yaml"]
+  },
+  
+  "shellcheck.enable": true,
+  "shellcheck.executablePath": "shellcheck",
+  "shellcheck.run": "onSave",
+  
+  "python.defaultInterpreterPath": "/usr/bin/python3",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.linting.banditEnabled": true,
+  "python.formatting.provider": "black",
+  "python.linting.mypyEnabled": true,
+  
+  "editor.rulers": [80, 120],
+  "editor.insertSpaces": true,
+  "editor.tabSize": 2,
+  "editor.detectIndentation": true,
+  
+  "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "advanced"
+  },
+  
+  "[shellscript]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4
+  },
+  
+  "[python]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.rulers": [88, 120]
+  },
+  
+  "[markdown]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.wordWrap": "on"
+  },
+  
+  "git.enableSmartCommit": true,
+  "git.confirmSync": false,
+  "git.autofetch": true,
+  
+  "workbench.colorCustomizations": {
+    "editorRuler.foreground": "#333333",
+    "terminal.background": "#0d1117",
+    "terminal.foreground": "#c9d1d9"
+  },
+  
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.fontSize": 14,
+  
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/venv": true,
+    "**/.git": true,
+    "**/vendor": true,
+    "**/*.log": true,
+    "**/tmp": true,
+    "**/temp": true
+  },
+  
+  "files.exclude": {
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "**/*.pyc": true,
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/node_modules": true
+  },
+  
+  "emmet.includeLanguages": {
+    "yaml": "html"
+  },
+  
+  "todo-tree.general.tags": [
+    "TODO",
+    "FIXME",
+    "NOTE",
+    "HACK",
+    "XXX",
+    "BUG",
+    "CRITICAL",
+    "SECURITY"
+  ],
+  
+  "todo-tree.highlights.defaultHighlight": {
+    "foreground": "white",
+    "background": "orange",
+    "iconColour": "orange"
+  },
+  
+  "todo-tree.highlights.customHighlight": {
+    "TODO": {
+      "background": "blue",
+      "iconColour": "blue"
+    },
+    "FIXME": {
+      "background": "red",
+      "iconColour": "red"
+    },
+    "CRITICAL": {
+      "background": "darkred",
+      "iconColour": "darkred"
+    },
+    "SECURITY": {
+      "background": "purple",
+      "iconColour": "purple"
+    }
+  },
+  
+  "extensions.ignoreRecommendations": false,
+  "extensions.showRecommendationsOnlyOnDemand": false
+}

@@ -1,0 +1,278 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SAST: Run Demo Mode",
+      "type": "shell",
+      "command": "./run_demo.sh",
+      "args": ["-s", "normal", "-c", "all"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "clear": true
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SAST: Deploy Minimal Stack",
+      "type": "shell",
+      "command": "./setup.sh",
+      "args": ["--demo"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "clear": true
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SAST: Test Real Repository",
+      "type": "shell",
+      "command": "./test_real_repo.sh",
+      "args": ["${input:repoUrl}"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared",
+        "clear": true
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SAST: Validate Configuration",
+      "type": "shell",
+      "command": "yq",
+      "args": ["eval", ".", "ci-config.yaml"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SAST: Check Service Status",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["-f", "docker-compose-minimal.yml", "ps"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SAST: View Service Logs",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["-f", "docker-compose-minimal.yml", "logs", "-f", "${input:serviceName}"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SAST: Stop All Services",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["-f", "docker-compose-minimal.yml", "down"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SAST: Email Setup Wizard",
+      "type": "shell",
+      "command": "./scripts/email_setup_wizard.sh",
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": true,
+        "panel": "shared",
+        "clear": true
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SAST: Language Detection Test",
+      "type": "shell",
+      "command": "python3",
+      "args": ["language-detector.py", "--repo", "${input:repoUrl}", "--verbose"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SAST: Integration Test",
+      "type": "shell",
+      "command": "./integration-tester.sh",
+      "args": ["--config", "ci-config.yaml", "--verbose"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SAST: Format Shell Scripts",
+      "type": "shell",
+      "command": "find",
+      "args": [".", "-name", "*.sh", "-exec", "shfmt", "-w", "-i", "4", "{}", ";"],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "silent",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "SAST: Lint Python Files",
+      "type": "shell",
+      "command": "find",
+      "args": [".", "-name", "*.py", "-exec", "pylint", "{}", ";"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "python",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s+(\\w+):\\s+(.+)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        }
+      ]
+    },
+    {
+      "label": "SAST: Check Shell Scripts",
+      "type": "shell",
+      "command": "find",
+      "args": [".", "-name", "*.sh", "-exec", "shellcheck", "{}", ";"],
+      "group": "test",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        {
+          "owner": "shellcheck",
+          "fileLocation": ["relative", "${workspaceFolder}"],
+          "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s+(\\w+):\\s+(.+)\\s+\\[SC(\\d+)\\]$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5,
+            "code": 6
+          }
+        }
+      ]
+    }
+  ],
+  "inputs": [
+    {
+      "id": "repoUrl",
+      "description": "Repository URL",
+      "default": "https://github.com/OWASP/NodeGoat",
+      "type": "promptString"
+    },
+    {
+      "id": "serviceName",
+      "description": "Service Name",
+      "default": "grafana",
+      "type": "pickString",
+      "options": [
+        "grafana",
+        "influxdb",
+        "prometheus",
+        "pushgateway",
+        "mailhog",
+        "sast-runner"
+      ]
+    }
+  ]
+}

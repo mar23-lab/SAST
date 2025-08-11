@@ -1,0 +1,24 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.pylint",
+    "ms-python.black-formatter",
+    "timonwong.shellcheck",
+    "foxundermoon.shell-format",
+    "redhat.vscode-yaml",
+    "ms-vscode.vscode-json",
+    "github.vscode-github-actions",
+    "ms-azuretools.vscode-docker",
+    "davidanson.vscode-markdownlint",
+    "yzhang.markdown-all-in-one",
+    "gruntfuggly.todo-tree",
+    "streetsidesoftware.code-spell-checker",
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-typescript-next",
+    "dbaeumer.vscode-eslint",
+    "ms-vscode.powershell",
+    "gitlab.gitlab-workflow",
+    "atlassian.atlascode"
+  ]
+}
