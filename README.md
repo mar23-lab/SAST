@@ -23,7 +23,7 @@ Transform any repository into a secure project with one command:
 
 ```bash
 # Clone or download this repository
-git clone https://github.com/xlooop-ai/SAST.git
+git clone https://github.com/mar23-lab/SAST.git
 cd SAST
 
 # Run quick deploy in your target repository
