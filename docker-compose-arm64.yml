@@ -1,7 +1,8 @@
 services:
-  # InfluxDB - Time series database for metrics
+  # InfluxDB - Time series database for metrics (ARM64 compatible)
   influxdb:
     image: influxdb:2.7
+    platform: linux/arm64
     container_name: sast-influxdb
     ports:
       - "8087:8086"
@@ -14,12 +15,15 @@ services:
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=sast-admin-token-12345
     volumes:
       - influxdb-data:/var/lib/influxdb2
+      - ./influxdb-config:/etc/influxdb2
     networks:
       - sast-network
+    restart: unless-stopped
 
-  # Grafana - Dashboard for visualization
+  # Grafana - Dashboard for visualization (ARM64 compatible, no problematic plugins)
   grafana:
-    image: grafana/grafana:10.2.0
+    image: grafana/grafana:11.1.0  # Updated to latest stable version
+    platform: linux/arm64
     container_name: sast-grafana
     ports:
       - "3001:3000"
@@ -27,6 +31,9 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin123
       - GF_SERVER_ROOT_URL=http://localhost:3001
       - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_INSTALL_PLUGINS=grafana-influxdb-datasource
+      # Removed problematic plugins: grafana-clock-panel,grafana-simple-json-datasource
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-influxdb-datasource
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana-config/provisioning:/etc/grafana/provisioning
@@ -35,10 +42,12 @@ services:
       - influxdb
     networks:
       - sast-network
+    restart: unless-stopped
 
-  # Prometheus - Metrics collection
+  # Prometheus - Metrics collection (ARM64 compatible)
   prometheus:
-    image: prom/prometheus:v2.47.0
+    image: prom/prometheus:v2.53.0  # Updated to latest stable version
+    platform: linux/arm64
     container_name: sast-prometheus
     ports:
       - "9090:9090"
@@ -54,36 +63,48 @@ services:
       - ./prometheus-config:/etc/prometheus
     networks:
       - sast-network
+    restart: unless-stopped
 
-  # Pushgateway - For sending metrics to Prometheus
+  # Pushgateway - For pushing metrics to Prometheus (ARM64 compatible)
   pushgateway:
-    image: prom/pushgateway:v1.6.2
+    image: prom/pushgateway:v1.9.0  # Updated to latest stable version
+    platform: linux/arm64
     container_name: sast-pushgateway
     ports:
       - "9091:9091"
     networks:
       - sast-network
+    restart: unless-stopped
 
-  # MailHog - For testing email notifications
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    container_name: sast-mailhog
+  # Mailpit - Modern email testing (ARM64 compatible replacement for MailHog)
+  mailpit:
+    image: axllent/mailpit:v1.19.0
+    platform: linux/arm64
+    container_name: sast-mailpit
     ports:
       - "1025:1025"  # SMTP server
       - "8025:8025"  # Web UI
     environment:
-      - MH_STORAGE=maildir
-      - MH_MAILDIR_PATH=/maildir
+      - MP_SMTP_AUTH_ACCEPT_ANY=1
+      - MP_SMTP_AUTH_ALLOW_INSECURE=1
+      - MP_MAX_MESSAGES=5000
+      - MP_DATABASE=/data/mailpit.db
+      - MP_SMTP_AUTH_FILE=/config/auth.txt
     volumes:
-      - mailhog-data:/maildir
+      - mailpit-data:/data
+      - ./mailpit-config:/config
     networks:
       - sast-network
+    restart: unless-stopped
 
-  # SAST Scanner Service
+  # SAST Scanner Service - Main service for running scans (ARM64 compatible)
   sast-runner:
     build:
       context: .
       dockerfile: Dockerfile.sast
+      platforms:
+        - linux/arm64
+    platform: linux/arm64
     container_name: sast-runner
     environment:
       - CONFIG_JSON_FILE=/app/ci-config.yaml
@@ -94,11 +115,12 @@ services:
       - GRAFANA_URL=http://grafana:3000
       - GRAFANA_API_KEY=admin123
       - PROMETHEUS_PUSHGATEWAY=pushgateway:9091
-      - EMAIL_SMTP_SERVER=mailhog
+      - EMAIL_SMTP_SERVER=mailpit
       - EMAIL_SMTP_PORT=1025
       - EMAIL_SMTP_USER=test@sast.local
       - EMAIL_SMTP_PASSWORD=testpass
       - DEMO_MODE=true
+      - PLATFORM=arm64
     volumes:
       - .:/app
       - /var/run/docker.sock:/var/run/docker.sock
@@ -107,15 +129,16 @@ services:
       - grafana
       - prometheus
       - pushgateway
-      - mailhog
+      - mailpit
     networks:
       - sast-network
+    restart: unless-stopped
 
 volumes:
   influxdb-data:
   grafana-data:
   prometheus-data:
-  mailhog-data:
+  mailpit-data:
 
 networks:
   sast-network:

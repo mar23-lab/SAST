@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-# Установка базовых зависимостей
+# Install basic dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     wget \
@@ -16,25 +16,25 @@ RUN apt-get update && apt-get install -y \
     lsb-release \
     && rm -rf /var/lib/apt/lists/*
 
-# Установка yq для работы с YAML
+# Install yq for YAML processing
 RUN wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
     && chmod +x /usr/local/bin/yq
 
-# Установка Docker CLI
+# Install Docker CLI
 RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg \
     && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null \
     && apt-get update \
     && apt-get install -y docker-ce-cli \
     && rm -rf /var/lib/apt/lists/*
 
-# Установка инструментов безопасности
+# Install security tools
 RUN pip3 install --no-cache-dir \
     bandit \
     semgrep \
     safety \
     influxdb-client
 
-# Установка ESLint и security плагинов
+# Install ESLint and security plugins
 RUN npm install -g \
     eslint \
     @typescript-eslint/parser \
@@ -42,24 +42,24 @@ RUN npm install -g \
     eslint-plugin-security \
     eslint-plugin-no-secrets
 
-# Создание рабочей директории
+# Create working directory
 WORKDIR /app
 
-# Копирование конфигурационных файлов
+# Copy configuration files
 COPY configs/ ./configs/
 COPY scripts/ ./scripts/
 COPY ci-config.yaml ./
 COPY run_demo.sh ./
 
-# Установка прав на выполнение
+# Set execution permissions
 RUN chmod +x ./scripts/*.sh ./run_demo.sh
 
-# Создание директорий для результатов
+# Create directories for results
 RUN mkdir -p ./sast-results ./demo-results
 
-# Переменные окружения
+# Environment variables
 ENV PATH="/usr/local/bin:$PATH"
 ENV PYTHONPATH="/app"
 
-# Основная команда
+# Main command
 CMD ["bash", "-c", "while true; do sleep 30; done"]

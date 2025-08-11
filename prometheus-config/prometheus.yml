@@ -7,33 +7,33 @@ rule_files:
   # - "second_rules.yml"
 
 scrape_configs:
-  # Prometheus собирает метрики с самого себя
+  # Prometheus collects metrics from itself
   - job_name: 'prometheus'
     static_configs:
       - targets: ['localhost:9090']
 
-  # Pushgateway для получения метрик от SAST сканеров
+  # Pushgateway for receiving metrics from SAST scanners
   - job_name: 'pushgateway'
     static_configs:
       - targets: ['pushgateway:9091']
     scrape_interval: 5s
     honor_labels: true
 
-  # InfluxDB метрики (если используется)
+  # InfluxDB metrics (if used)
   - job_name: 'influxdb'
     static_configs:
       - targets: ['influxdb:8086']
     metrics_path: /metrics
     scrape_interval: 30s
 
-  # Grafana метрики
+  # Grafana metrics
   - job_name: 'grafana'
     static_configs:
       - targets: ['grafana:3000']
     metrics_path: /metrics
     scrape_interval: 30s
 
-# Дополнительные конфигурации для алертов
+# Additional configurations for alerts
 alerting:
   alertmanagers:
     - static_configs:

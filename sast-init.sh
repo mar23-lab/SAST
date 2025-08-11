@@ -276,9 +276,13 @@ interactive_setup() {
     read -r monitoring
     [[ "$monitoring" != "n" ]] && features_list+=("monitoring")
     
-    echo -n "Enable advanced notifications? [y]: "
+    echo -n "Configure email notifications? [y]: "
+    read -r email_notifications
+    [[ "$email_notifications" != "n" ]] && features_list+=("email_notifications")
+    
+    echo -n "Enable advanced notifications (Slack, Jira)? [n]: "
     read -r notifications
-    [[ "$notifications" != "n" ]] && features_list+=("notifications")
+    [[ "$notifications" == "y" ]] && features_list+=("notifications")
     
     FEATURES=$(IFS=','; echo "${features_list[*]}")
     
@@ -504,48 +508,109 @@ deploy_monitoring_stack() {
         return 0
     fi
     
-    log_step "Deploying monitoring stack..."
+    log_step "Deploying ARM64-compatible monitoring stack..."
     
-    # Copy Docker configuration from SAST repository
+    # Run platform detection for ARM64 compatibility
     local sast_dir="$(dirname "$0")"
+    local platform_detector="$sast_dir/scripts/platform-detector.sh"
     
-    if [[ -f "$sast_dir/docker-compose.yml" ]]; then
+    if [[ -f "$platform_detector" ]]; then
+        log_info "Detecting platform and optimizing for compatibility..."
+        bash "$platform_detector" > platform-detection.log 2>&1
+        
+        # Source platform configuration
+        if [[ -f ".env.platform" ]]; then
+            source .env.platform
+            log_success "Platform detected: $DETECTED_ARCH ($DOCKER_PLATFORM)"
+            log_info "Email service: $EMAIL_SERVICE_NAME"
+        fi
+    fi
+    
+    # Choose the appropriate Docker Compose file
+    local compose_file="docker-compose.yml"
+    if [[ -f "docker-compose-platform.yml" ]]; then
+        compose_file="docker-compose-platform.yml"
+        log_info "Using platform-optimized Docker Compose configuration"
+    elif [[ -f "$sast_dir/docker-compose-universal.yml" ]]; then
+        cp "$sast_dir/docker-compose-universal.yml" "./docker-compose-sast.yml"
+        compose_file="docker-compose-sast.yml"
+        log_info "Using universal compatibility Docker Compose"
+    elif [[ -f "$sast_dir/docker-compose.yml" ]]; then
         cp "$sast_dir/docker-compose.yml" "./docker-compose-sast.yml"
         cp -r "$sast_dir/grafana-config" "./grafana-config" 2>/dev/null || true
         cp -r "$sast_dir/prometheus-config" "./prometheus-config" 2>/dev/null || true
         
-        log_info "Starting monitoring stack..."
-        docker-compose -f docker-compose-sast.yml up -d
-        
-        # Wait for services to be ready
-        log_info "Waiting for services to start..."
-        sleep 30
-        
-        # Validate services
-        local services_ready=0
-        
-        if curl -s http://localhost:9090/-/healthy >/dev/null 2>&1; then
-            log_success "Prometheus ready at http://localhost:9090"
+        compose_file="docker-compose-sast.yml"
+        log_info "Using standard Docker Compose configuration"
+    fi
+    
+    # Copy necessary configuration files
+    if [[ -d "$sast_dir/grafana-config" ]]; then
+        cp -r "$sast_dir/grafana-config" "./grafana-config" 2>/dev/null || true
+    fi
+    if [[ -d "$sast_dir/prometheus-config" ]]; then
+        cp -r "$sast_dir/prometheus-config" "./prometheus-config" 2>/dev/null || true
+    fi
+    
+    log_info "Starting monitoring stack with $compose_file..."
+    docker-compose -f "$compose_file" up -d
+    
+    # Wait for services to be ready
+    log_info "Waiting for services to start..."
+    sleep 30
+    
+    # Validate services
+    local services_ready=0
+    
+    if curl -s http://localhost:9090/-/healthy >/dev/null 2>&1; then
+        log_success "Prometheus ready at http://localhost:9090"
+        ((services_ready++))
+    fi
+    
+    # Check email service (Mailpit or MailHog)
+    local email_service_name="${EMAIL_SERVICE_NAME:-mailhog}"
+    if curl -s http://localhost:8025/ >/dev/null 2>&1; then
+        log_success "$email_service_name ready at http://localhost:8025"
+        ((services_ready++))
+    elif curl -s http://localhost:8025/api/v1/messages >/dev/null 2>&1; then
+        log_success "MailHog ready at http://localhost:8025"
+        ((services_ready++))
+    fi
+    
+    if curl -s http://localhost:9091/metrics >/dev/null 2>&1; then
+        log_success "PushGateway ready at http://localhost:9091"
+        ((services_ready++))
+    fi
+    
+    # Test Grafana with retry logic and ARM64 awareness
+    local grafana_attempts=0
+    while [[ $grafana_attempts -lt 5 ]]; do
+        if curl -s http://localhost:3001/api/health >/dev/null 2>&1; then
+            log_success "Grafana ready at http://localhost:3001"
             ((services_ready++))
+            break
         fi
-        
-        if curl -s http://localhost:8025/api/v1/messages >/dev/null 2>&1; then
-            log_success "MailHog ready at http://localhost:8025"
-            ((services_ready++))
-        fi
-        
-        if curl -s http://localhost:9091/metrics >/dev/null 2>&1; then
-            log_success "PushGateway ready at http://localhost:9091"
-            ((services_ready++))
-        fi
-        
-        if [[ $services_ready -gt 0 ]]; then
-            log_success "Monitoring stack deployed successfully ($services_ready/4 services ready)"
+        ((grafana_attempts++))
+        log_info "Waiting for Grafana... (attempt $grafana_attempts/5)"
+        sleep 10
+    done
+    
+    if [[ $grafana_attempts -eq 5 ]]; then
+        if [[ "${DETECTED_ARCH:-}" == "arm64" ]]; then
+            log_info "Grafana startup timeout on ARM64 - this is common on first run"
+            log_info "Run: docker-compose -f $compose_file logs grafana"
         else
-            log_warning "Monitoring stack deployment may have issues"
+            log_warning "Grafana startup timeout - check logs for details"
+        fi
+    fi
+    
+    if [[ $services_ready -gt 0 ]]; then
+        log_success "Monitoring stack deployed successfully ($services_ready/4 services ready)"
+        if [[ "${DETECTED_ARCH:-}" == "arm64" ]]; then
+            log_success "ARM64 optimization active - using $email_service_name and optimized images"
         fi
     else
-        log_warning "SAST monitoring configuration not found, skipping Docker deployment"
+        log_warning "Monitoring stack deployment may have issues"
     fi
 }
 
@@ -638,6 +703,64 @@ EOF
     log_success "Documentation created: SAST_SETUP.md"
 }
 
+# Setup email notifications
+setup_email_notifications() {
+    log_step "Setting up email notifications..."
+    
+    local sast_dir="$(dirname "$0")"
+    local email_wizard="$sast_dir/scripts/email-setup-wizard.sh"
+    
+    if [[ -f "$email_wizard" ]]; then
+        log_info "Launching email setup wizard..."
+        echo ""
+        echo -e "${CYAN}Email notifications will enhance your security workflow with:${NC}"
+        echo "• Critical vulnerability alerts"
+        echo "• Scan failure notifications"
+        echo "• Weekly security reports"
+        echo "• Team collaboration features"
+        echo ""
+        
+        read -p "Continue with email setup? [Y/n]: " continue_email
+        if [[ "$continue_email" =~ ^[Yy]$|^$ ]]; then
+            if bash "$email_wizard"; then
+                log_success "Email notifications configured successfully"
+            else
+                log_warning "Email setup encountered issues (can be configured later)"
+            fi
+        else
+            log_info "Email setup skipped (can be configured later)"
+            log_info "Run: $email_wizard"
+        fi
+    else
+        log_warning "Email wizard not found, creating basic email configuration"
+        
+        # Fallback: create basic email config template
+        cat >> "ci-config-generated.yaml" << 'EOF'
+
+# Email Notifications Configuration
+# To complete setup, run: ./scripts/email-setup-wizard.sh
+notifications:
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    use_tls: true
+    sender_email: "your-email@gmail.com"
+    sender_name: "SAST Security Scanner"
+    recipients:
+      - "security-team@company.com"
+    triggers:
+      critical: true
+      high: true
+      medium: false
+      low: false
+      scan_complete: false
+      scan_failed: true
+EOF
+        log_info "Basic email configuration template added to ci-config-generated.yaml"
+    fi
+}
+
 # Test installation
 test_installation() {
     log_step "Testing installation..."
@@ -710,6 +833,11 @@ run_setup() {
     
     # Deploy monitoring stack
     deploy_monitoring_stack
+    
+    # Setup email notifications if requested
+    if [[ "$FEATURES" == *"email_notifications"* ]]; then
+        setup_email_notifications
+    fi
     
     # Generate documentation
     generate_documentation
