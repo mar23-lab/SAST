@@ -1,0 +1,7 @@
+✅ Тест подключения к GitHub
+Дата: $(date)
+Пользователь: maratb2022@gmail.com
+SSH ключ: MacBook Pro - GitHub SSH Key
+SHA256: 6zYQAAmpOBC93gXaheMkZEAVTrOb9rXvV3yFBe8cNc0
+
+Этот файл создан для тестирования возможности коммитов в репозиторий.
