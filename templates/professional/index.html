@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{COMPANY_NAME}} Security Dashboard</title>
+    <meta name="description" content="Real-time security monitoring and SAST analysis for {{COMPANY_NAME}}">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="assets/img/security-shield.png" type="image/png">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="assets/css/professional.css">
+    <link rel="stylesheet" href="../shared/css/responsive.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+</head>
+<body class="professional-theme">
+    <!-- Header -->
+    <header class="professional-header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo-section">
+                    <img src="{{COMPANY_LOGO}}" alt="{{COMPANY_NAME}}" class="company-logo" id="company-logo">
+                    <div class="title-group">
+                        <h1>Security Dashboard</h1>
+                        <p class="subtitle">Real-time SAST monitoring</p>
+                    </div>
+                </div>
+                
+                <div class="system-status">
+                    <div class="status-indicator">
+                        <span class="status-badge" id="system-status">●</span>
+                        <div class="status-info">
+                            <span class="status-text" id="status-text">System Health</span>
+                            <span class="status-details" id="status-details">Checking...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="last-update">
+                        <span class="update-label">Last Updated</span>
+                        <span class="update-time" id="last-updated">{{LAST_UPDATED}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="dashboard-main">
+        <div class="container">
+            
+            <!-- Security Metrics Overview -->
+            <section class="metrics-overview">
+                <h2 class="section-title">Security Overview</h2>
+                <div class="metrics-grid">
+                    <div class="metric-card critical">
+                        <div class="metric-icon">🚨</div>
+                        <div class="metric-content">
+                            <h3>Critical</h3>
+                            <div class="metric-value" id="critical-count">0</div>
+                            <p class="metric-description">Immediate Action Required</p>
+                            <div class="metric-trend" id="critical-trend">
+                                <span class="trend-icon">→</span>
+                                <span class="trend-text">No change</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card high">
+                        <div class="metric-icon">⚠️</div>
+                        <div class="metric-content">
+                            <h3>High Priority</h3>
+                            <div class="metric-value" id="high-count">0</div>
+                            <p class="metric-description">Address Within 24h</p>
+                            <div class="metric-trend" id="high-trend">
+                                <span class="trend-icon">→</span>
+                                <span class="trend-text">No change</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card medium">
+                        <div class="metric-icon">📋</div>
+                        <div class="metric-content">
+                            <h3>Medium</h3>
+                            <div class="metric-value" id="medium-count">0</div>
+                            <p class="metric-description">Plan Remediation</p>
+                            <div class="metric-trend" id="medium-trend">
+                                <span class="trend-icon">→</span>
+                                <span class="trend-text">No change</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card low">
+                        <div class="metric-icon">ℹ️</div>
+                        <div class="metric-content">
+                            <h3>Low</h3>
+                            <div class="metric-value" id="low-count">0</div>
+                            <p class="metric-description">Monitor & Track</p>
+                            <div class="metric-trend" id="low-trend">
+                                <span class="trend-icon">→</span>
+                                <span class="trend-text">No change</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security Posture & Trends -->
+            <section class="analytics-section">
+                <div class="analytics-grid">
+                    
+                    <!-- Security Score -->
+                    <div class="analytics-card security-score">
+                        <h3>Security Posture Score</h3>
+                        <div class="score-container">
+                            <div class="score-chart">
+                                <canvas id="security-score-chart" width="150" height="150"></canvas>
+                                <div class="score-overlay">
+                                    <span class="score-number" id="security-score">0</span>
+                                    <span class="score-label">Score</span>
+                                </div>
+                            </div>
+                            <div class="score-details">
+                                <div class="score-breakdown">
+                                    <div class="breakdown-item">
+                                        <span class="breakdown-label">Vulnerability Management</span>
+                                        <span class="breakdown-value" id="vuln-mgmt-score">85%</span>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="breakdown-label">Code Quality</span>
+                                        <span class="breakdown-value" id="code-quality-score">92%</span>
+                                    </div>
+                                    <div class="breakdown-item">
+                                        <span class="breakdown-label">Compliance</span>
+                                        <span class="breakdown-value" id="compliance-score">88%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Trend Analysis -->
+                    <div class="analytics-card trend-analysis">
+                        <h3>30-Day Trend Analysis</h3>
+                        <div class="chart-container">
+                            <canvas id="trend-chart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="trend-summary">
+                            <div class="summary-item">
+                                <span class="summary-label">Average Resolution Time</span>
+                                <span class="summary-value" id="avg-resolution">2.3 days</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">Detection Rate</span>
+                                <span class="summary-value" id="detection-rate">94%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </section>
+
+            <!-- Recent Activity & Commits -->
+            <section class="activity-section">
+                <div class="activity-grid">
+                    
+                    <!-- Recent Security Events -->
+                    <div class="activity-card recent-events">
+                        <div class="card-header">
+                            <h3>Recent Security Events</h3>
+                            <button class="refresh-btn" id="refresh-events" title="Refresh events">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                                    <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="activity-list" id="activity-list">
+                            <!-- Populated by JavaScript -->
+                            <div class="activity-item placeholder">
+                                <div class="activity-icon">🔍</div>
+                                <div class="activity-content">
+                                    <span class="activity-title">Loading security events...</span>
+                                    <span class="activity-time">Please wait</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Commits -->
+                    <div class="activity-card recent-commits">
+                        <div class="card-header">
+                            <h3>Recent Commits</h3>
+                            <a href="{{GITHUB_REPO_URL}}/commits" class="view-all-link" target="_blank">View All</a>
+                        </div>
+                        <div class="commits-list" id="commits-list">
+                            <!-- Populated by JavaScript -->
+                            <div class="commit-item placeholder">
+                                <div class="commit-avatar">
+                                    <div class="avatar-placeholder"></div>
+                                </div>
+                                <div class="commit-content">
+                                    <span class="commit-message">Loading recent commits...</span>
+                                    <div class="commit-meta">
+                                        <span class="commit-author">System</span>
+                                        <span class="commit-time">Just now</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </section>
+
+            <!-- Integration Status -->
+            <section class="integration-section">
+                <h2 class="section-title">System Integration Status</h2>
+                <div class="integration-grid">
+                    
+                    <div class="integration-card" id="github-integration">
+                        <div class="integration-header">
+                            <div class="integration-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                                </svg>
+                            </div>
+                            <div class="integration-info">
+                                <h4>GitHub</h4>
+                                <span class="integration-description">Code repository & workflows</span>
+                            </div>
+                        </div>
+                        <div class="integration-status">
+                            <span class="status-badge" id="github-status">●</span>
+                            <span class="status-text" id="github-status-text">Checking...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-card" id="slack-integration">
+                        <div class="integration-header">
+                            <div class="integration-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zM8.834 6.313a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zM17.688 8.834a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zM15.165 18.956a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zM15.165 17.688a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+                                </svg>
+                            </div>
+                            <div class="integration-info">
+                                <h4>Slack</h4>
+                                <span class="integration-description">Team notifications</span>
+                            </div>
+                        </div>
+                        <div class="integration-status">
+                            <span class="status-badge" id="slack-status">●</span>
+                            <span class="status-text" id="slack-status-text">Checking...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-card" id="email-integration">
+                        <div class="integration-header">
+                            <div class="integration-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M0 4a2 2 0 0 1 2-2h20a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v.217l11 5.5 11-5.5V4a1 1 0 0 0-1-1H2zm21 2.383l-4.708 2.354L22 11.105V5.383zM2 5.383v5.722l3.708-3.368L2 5.383zM8.708 12l-8.708 7h24l-8.708-7L12 14.5 8.708 12z"/>
+                                </svg>
+                            </div>
+                            <div class="integration-info">
+                                <h4>Email</h4>
+                                <span class="integration-description">Report delivery</span>
+                            </div>
+                        </div>
+                        <div class="integration-status">
+                            <span class="status-badge" id="email-status">●</span>
+                            <span class="status-text" id="email-status-text">Checking...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="integration-card" id="jira-integration">
+                        <div class="integration-header">
+                            <div class="integration-icon">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M11.53 2c0 2.4 1.97 4.37 4.37 4.37h0.63V9.4c0 2.4-1.97 4.37-4.37 4.37s-4.37-1.97-4.37-4.37V2H11.53M16.53 6.37V9.4c0 2.4 1.97 4.37 4.37 4.37V10.77c-1.99 0-3.6-1.61-3.6-3.6V6.37H16.53z"/>
+                                </svg>
+                            </div>
+                            <div class="integration-info">
+                                <h4>Jira</h4>
+                                <span class="integration-description">Issue tracking</span>
+                            </div>
+                        </div>
+                        <div class="integration-status">
+                            <span class="status-badge" id="jira-status">●</span>
+                            <span class="status-text" id="jira-status-text">Checking...</span>
+                        </div>
+                    </div>
+                    
+                </div>
+            </section>
+
+            <!-- Scanner Performance -->
+            <section class="scanner-section">
+                <h2 class="section-title">Scanner Performance</h2>
+                <div class="scanner-grid">
+                    
+                    <div class="scanner-card codeql">
+                        <div class="scanner-header">
+                            <h4>CodeQL</h4>
+                            <span class="scanner-badge" id="codeql-badge">●</span>
+                        </div>
+                        <div class="scanner-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Issues Found</span>
+                                <span class="metric-value" id="codeql-issues">0</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Scan Duration</span>
+                                <span class="metric-value" id="codeql-duration">0s</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Coverage</span>
+                                <span class="metric-value" id="codeql-coverage">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="scanner-card semgrep">
+                        <div class="scanner-header">
+                            <h4>Semgrep</h4>
+                            <span class="scanner-badge" id="semgrep-badge">●</span>
+                        </div>
+                        <div class="scanner-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Issues Found</span>
+                                <span class="metric-value" id="semgrep-issues">0</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Scan Duration</span>
+                                <span class="metric-value" id="semgrep-duration">0s</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Rules</span>
+                                <span class="metric-value" id="semgrep-rules">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="scanner-card eslint">
+                        <div class="scanner-header">
+                            <h4>ESLint Security</h4>
+                            <span class="scanner-badge" id="eslint-badge">●</span>
+                        </div>
+                        <div class="scanner-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Issues Found</span>
+                                <span class="metric-value" id="eslint-issues">0</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Scan Duration</span>
+                                <span class="metric-value" id="eslint-duration">0s</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Files Scanned</span>
+                                <span class="metric-value" id="eslint-files">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="scanner-card typescript">
+                        <div class="scanner-header">
+                            <h4>TypeScript</h4>
+                            <span class="scanner-badge" id="typescript-badge">●</span>
+                        </div>
+                        <div class="scanner-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Type Errors</span>
+                                <span class="metric-value" id="typescript-errors">0</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Check Duration</span>
+                                <span class="metric-value" id="typescript-duration">0s</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Strictness</span>
+                                <span class="metric-value" id="typescript-strict">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="professional-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <p>&copy; {{CURRENT_YEAR}} {{COMPANY_NAME}}. All rights reserved.</p>
+                    <p class="powered-by">Powered by <a href="https://github.com/universal-sast/boilerplate-core" target="_blank">Universal SAST Boilerplate</a></p>
+                </div>
+                <div class="footer-links">
+                    <a href="{{CONTACT_EMAIL}}" class="contact-link">Security Contact</a>
+                    <a href="{{GITHUB_REPO_URL}}" target="_blank" class="repo-link">Repository</a>
+                    <a href="{{GITHUB_REPO_URL}}/security" target="_blank" class="security-link">Security Policy</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Loading security data...</p>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="../shared/js/charts.js"></script>
+    <script src="assets/js/professional-dashboard.js"></script>
+    <script src="assets/js/real-data-loader.js"></script>
+    <script src="assets/js/integration-status.js"></script>
+    
+    <!-- Initialize Dashboard -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize professional dashboard
+            const dashboard = new ProfessionalDashboard({
+                companyName: '{{COMPANY_NAME}}',
+                contactEmail: '{{CONTACT_EMAIL}}',
+                githubRepo: '{{GITHUB_REPO_URL}}',
+                refreshInterval: 300000 // 5 minutes
+            });
+            
+            dashboard.initialize();
+        });
+    </script>
+</body>
+</html>

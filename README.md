@@ -1,6 +1,9 @@
-# 🔒 CI/CD SAST Security Boilerplate
 
-A comprehensive, production-ready CI/CD boilerplate for Static Application Security Testing (SAST) with centralized configuration, multi-channel notifications, and demo mode capabilities.
+# 🔒 Universal SAST Boilerplate
+
+**Transform any repository into a secure, enterprise-ready project with automated SAST scanning, professional dashboards, and comprehensive DevSecOps integration.**
+
+> **🎉 Now Available**: Universal boilerplate mode! One-command setup for any project type. See [Universal Setup](#-universal-setup) below.
 
 ## 🎯 Overview
 
@@ -12,7 +15,52 @@ This repository provides a complete CI/CD solution for implementing security sca
 - **Demo/test mode** for safe evaluation
 - **Production-ready workflows**
 
-## 🚀 Quick Start
+## 🚀 Universal Setup (New!)
+
+### 🎯 **Quick Deploy** (Recommended - 60 seconds)
+
+Transform any repository into a secure project with one command:
+
+```bash
+# Clone or download this repository
+git clone https://github.com/xlooop-ai/SAST.git
+cd SAST
+
+# Run quick deploy in your target repository
+./quick-deploy.sh
+```
+
+This automatically configures:
+- ✅ Multi-scanner SAST (CodeQL, Semgrep, ESLint, Bandit)
+- ✅ GitHub Actions workflow  
+- ✅ Professional security dashboard
+- ✅ Quality gates and notifications
+
+### 🎛️ **Custom Setup** (Interactive)
+
+```bash
+# Full onboarding wizard
+./scripts/universal-onboarding.sh --interactive
+
+# Or specify options directly
+./scripts/universal-onboarding.sh \
+  --project-name "My Secure App" \
+  --email "developer@company.com" \
+  --template professional \
+  --features "github_pages,notifications,reports"
+```
+
+### 📋 **Template Options**
+
+| Template | Features | Best For |
+|----------|----------|----------|
+| **Basic** | Core SAST + Notifications | Small teams, simple projects |
+| **Professional** | + GitHub Pages + Analytics | Most projects, client demos |  
+| **Enterprise** | + Advanced reporting + Compliance | Large organizations |
+
+---
+
+## 🔧 Traditional CI/CD Setup
 
 ### 1. Clone and Configure
 
