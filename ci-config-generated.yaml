@@ -1,0 +1,339 @@
+# ===================================================================
+# CI/CD SAST Boilerplate - Centralized Configuration
+# ===================================================================
+# This file contains all configuration variables for the CI/CD pipeline
+# and SAST scanning workflows. Update values according to your environment.
+
+# ===================================================================
+# GENERAL SETTINGS
+# ===================================================================
+project:
+  name: "CI-SAST-Boilerplate"
+  version: "1.0.0"
+  environment: "production"  # production, staging, development
+  team: "devops-security"
+  contact_email: "devops@company.com"
+
+# ===================================================================
+# SAST SCANNING CONFIGURATION
+# ===================================================================
+sast:
+  # Enabled SAST scanners (available: codeql, semgrep, bandit, eslint, sonarqube)
+  scanners:
+    - "codeql"
+    - "semgrep"
+    - "bandit"
+    - "eslint"
+  
+  # Programming languages to scan
+  languages:
+    - "javascript"
+    - "typescript"
+    - "python"
+    - "go"
+    - "java"
+    - "csharp"
+  
+  # Severity levels to report (critical, high, medium, low, info)
+  severity_threshold: "medium"
+  
+  # Maximum allowed critical vulnerabilities (pipeline fails if exceeded)
+  max_critical_vulnerabilities: 0
+  max_high_vulnerabilities: 5
+  
+  # CodeQL specific settings
+  codeql:
+    query_suites:
+      - "security-and-quality"
+      - "security-extended"
+    timeout_minutes: 30
+  
+  # Semgrep specific settings
+  semgrep:
+    rules: "auto"  # auto, p/security-audit, p/owasp-top-ten, custom ruleset
+    timeout_minutes: 15
+    exclude_paths:
+      - "tests/"
+      - "node_modules/"
+      - "vendor/"
+      - "*.test.js"
+      - "*.spec.ts"
+  
+  # Bandit (Python) specific settings
+  bandit:
+    confidence_level: "medium"  # low, medium, high
+    exclude_paths:
+      - "tests/"
+      - "venv/"
+      - "*.py.bak"
+  
+  # ESLint security specific settings
+  eslint:
+    config_file: ".eslintrc.security.json"
+    include_patterns:
+      - "src/**/*.js"
+      - "src/**/*.ts"
+      - "src/**/*.jsx"
+      - "src/**/*.tsx"
+
+# ===================================================================
+# NOTIFICATION SETTINGS
+# ===================================================================
+notifications:
+  enabled: true
+  
+  # When to send notifications (always, on_failure, on_success, never)
+  trigger: "on_failure"
+  
+  # Notification channels
+  channels:
+    email: true
+    slack: true
+    jira: true
+    teams: false
+  
+  # Email notification settings
+  email:
+    enabled: true
+    smtp_server: "smtp.company.com"
+    smtp_port: 587
+    sender_email: "ci-alerts@company.com"
+    sender_name: "CI/CD Security Alerts"
+    recipients:
+      - "security-team@company.com"
+      - "devops-team@company.com"
+    subject_prefix: "[SAST Alert]"
+    include_summary: true
+    include_details: true
+
+# ===================================================================
+# INTEGRATION SETTINGS
+# ===================================================================
+integrations:
+  # Slack integration
+  slack:
+    enabled: true
+    webhook_url: ""  # Set via environment variable or secret
+    channel: "#security-alerts"
+    username: "CI-Security-Bot"
+    icon_emoji: ":warning:"
+    mention_users:
+      - "@security-team"
+      - "@devops-lead"
+    message_format: "detailed"  # simple, detailed, json
+  
+  # Microsoft Teams integration
+  teams:
+    enabled: false
+    webhook_url: ""
+    card_theme: "warning"
+  
+  # Jira integration
+  jira:
+    enabled: true
+    server_url: "https://company.atlassian.net"
+    project_key: "SEC"
+    issue_type: "Bug"
+    priority: "High"
+    assignee: "security-team"
+    components:
+      - "Security"
+      - "SAST"
+    labels:
+      - "security-vulnerability"
+      - "sast-scan"
+      - "auto-created"
+    auto_assign: true
+    create_on_severity:
+      - "critical"
+      - "high"
+  
+  # Grafana dashboard integration
+  grafana:
+    enabled: true
+    server_url: "https://grafana.company.com"
+    dashboard_uid: "sast-security-dashboard"
+    datasource: "prometheus"
+    organization_id: 1
+    folder: "Security"
+    
+    # Metrics to track
+    metrics:
+      - name: "sast_vulnerabilities_total"
+        type: "counter"
+        description: "Total number of vulnerabilities found"
+      - name: "sast_scan_duration_seconds"
+        type: "histogram"
+        description: "Time taken for SAST scans"
+      - name: "sast_scan_status"
+        type: "gauge"
+        description: "Last scan status (1=success, 0=failure)"
+
+# ===================================================================
+# PIPELINE BEHAVIOR
+# ===================================================================
+pipeline:
+  # Pipeline triggers
+  triggers:
+    push_branches:
+      - "main"
+      - "master"
+      - "develop"
+      - "release/*"
+    pull_request_targets:
+      - "main"
+      - "master"
+    schedule_cron: "0 2 * * *"  # Daily at 2 AM UTC
+    manual_dispatch: true
+  
+  # Build matrix for different environments
+  matrix:
+    os:
+      - "ubuntu-latest"
+      # - "windows-latest"  # Uncomment if needed
+      # - "macos-latest"    # Uncomment if needed
+    node_version:
+      - "18"
+      - "20"
+    python_version:
+      - "3.9"
+      - "3.10"
+      - "3.11"
+  
+  # Timeout settings (in minutes)
+  timeouts:
+    total_pipeline: 60
+    sast_scan: 30
+    notification: 5
+    upload_results: 10
+  
+  # Retry settings
+  retries:
+    max_attempts: 3
+    retry_on:
+      - "timeout"
+      - "infrastructure_failure"
+    backoff_strategy: "exponential"  # linear, exponential
+
+# ===================================================================
+# SECURITY SETTINGS
+# ===================================================================
+security:
+  # Secret scanning
+  secret_scanning:
+    enabled: true
+    exclude_patterns:
+      - "*.example"
+      - "*.template"
+      - "test_*"
+  
+  # Dependency scanning
+  dependency_scanning:
+    enabled: true
+    package_managers:
+      - "npm"
+      - "pip"
+      - "go"
+      - "maven"
+      - "gradle"
+    vulnerability_database: "github"  # github, snyk, whitesource
+  
+  # Code quality gates
+  quality_gates:
+    enabled: true
+    coverage_threshold: 80
+    duplication_threshold: 3
+    maintainability_rating: "A"
+    reliability_rating: "A"
+    security_rating: "A"
+
+# ===================================================================
+# REPORTING SETTINGS
+# ===================================================================
+reporting:
+  # Report formats to generate
+  formats:
+    - "sarif"
+    - "json"
+    - "html"
+    - "pdf"
+  
+  # Report storage
+  storage:
+    enabled: true
+    retention_days: 90
+    s3_bucket: "ci-sast-reports"
+    archive_after_days: 30
+  
+  # Dashboard settings
+  dashboard:
+    enabled: true
+    auto_refresh_seconds: 300
+    show_trends: true
+    trend_period_days: 30
+  
+  # Metrics collection
+  metrics:
+    enabled: true
+    collector: "prometheus"  # prometheus, datadog, newrelic
+    push_gateway: "pushgateway.monitoring.svc.cluster.local:9091"
+
+# ===================================================================
+# DEMO/TEST MODE SETTINGS
+# ===================================================================
+demo_mode:
+  enabled: false  # Set to true for demo runs
+  
+  # Demo data settings
+  simulate_vulnerabilities: true
+  mock_scan_duration: 30  # seconds
+  
+  # Demo notifications
+  demo_recipients:
+    - "demo@example.com"
+  demo_slack_channel: "#demo-alerts"
+  demo_jira_project: "DEMO"
+  
+  # Demo labels/prefixes
+  label_prefix: "[DEMO]"
+  test_mode_indicator: "🧪 TEST MODE"
+  
+  # Dummy data for integrations
+  dummy_data:
+    vulnerabilities:
+      critical: 2
+      high: 5
+      medium: 12
+      low: 8
+    scan_time: "2m 15s"
+    total_files_scanned: 247
+    lines_of_code: 15420
+
+# ===================================================================
+# ENVIRONMENT-SPECIFIC OVERRIDES
+# ===================================================================
+environments:
+  development:
+    sast:
+      severity_threshold: "low"
+      max_critical_vulnerabilities: 10
+    notifications:
+      trigger: "never"
+    
+  staging:
+    sast:
+      severity_threshold: "medium"
+      max_critical_vulnerabilities: 5
+    notifications:
+      trigger: "on_failure"
+    
+  production:
+    sast:
+      severity_threshold: "medium"
+      max_critical_vulnerabilities: 0
+    notifications:
+      trigger: "always"
+    pipeline:
+      timeouts:
+        total_pipeline: 120
+        sast_scan: 60

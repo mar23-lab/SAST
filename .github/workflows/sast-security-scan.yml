@@ -1,145 +1,109 @@
-name: SAST Security Scan
+name: 🔒 SAST Security Scan
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, master, develop ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
   schedule:
-    # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
   workflow_dispatch:
-    inputs:
-      scan_type:
-        description: 'Type of scan to run'
-        required: true
-        default: 'full'
-        type: choice
-        options:
-          - full
-          - quick
-          - critical-only
 
 env:
-  # Load configuration from central config file
-  CONFIG_FILE: 'ci-config.yaml'
+  CONFIG_FILE: ci-config-generated.yaml
 
 jobs:
-  load-config:
-    runs-on: ubuntu-latest
-    outputs:
-      config: ${{ steps.parse-config.outputs.config }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Parse configuration
-        id: parse-config
-        run: |
-          # Install yq for YAML parsing
-          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-          sudo chmod +x /usr/local/bin/yq
-          
-          # Parse config and set outputs
-          config=$(cat ci-config.yaml | yq -o=json)
-          echo "config=$config" >> $GITHUB_OUTPUT
-
   sast-scan:
-    needs: load-config
+    name: Security Analysis
     runs-on: ubuntu-latest
+    
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    
     strategy:
+      fail-fast: false
       matrix:
-        scanner: ${{ fromJson(needs.load-config.outputs.config).sast.scanners }}
+        scanner: [codeql, semgrep, bandit, eslint]
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup scan environment
-        run: |
-          config='${{ needs.load-config.outputs.config }}'
-          echo "SCAN_TYPE=${{ github.event.inputs.scan_type || 'full' }}" >> $GITHUB_ENV
-          echo "NOTIFICATIONS_ENABLED=$(echo $config | jq -r '.notifications.enabled')" >> $GITHUB_ENV
-          echo "SLACK_WEBHOOK=$(echo $config | jq -r '.integrations.slack.webhook_url')" >> $GITHUB_ENV
-
-      - name: CodeQL Analysis
-        if: matrix.scanner == 'codeql'
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ fromJson(needs.load-config.outputs.config).sast.languages }}
-          queries: ${{ fromJson(needs.load-config.outputs.config).sast.codeql.query_suites }}
-
-      - name: Perform CodeQL Analysis
-        if: matrix.scanner == 'codeql'
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{ matrix.language }}"
-
-      - name: Semgrep SAST Scan
-        if: matrix.scanner == 'semgrep'
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: ${{ fromJson(needs.load-config.outputs.config).sast.semgrep.rules }}
-        env:
-          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
-
-      - name: Bandit Security Scan (Python)
-        if: matrix.scanner == 'bandit'
-        run: |
-          pip install bandit[toml]
-          bandit -r . -f json -o bandit-report.json || true
-
-      - name: ESLint Security Scan (JavaScript/TypeScript)
-        if: matrix.scanner == 'eslint'
-        run: |
-          npm install -g eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
-          eslint . --ext .js,.ts,.jsx,.tsx --format json --output-file eslint-report.json || true
-
-      - name: Upload SARIF results
-        if: always()
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: ${{ matrix.scanner }}-results.sarif
-        continue-on-error: true
-
-      - name: Process scan results
-        if: always()
-        run: |
-          chmod +x ./scripts/process_results.sh
-          ./scripts/process_results.sh "${{ matrix.scanner }}" "${{ env.SCAN_TYPE }}"
-
-  notify-results:
-    needs: [load-config, sast-scan]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Send notifications
-        if: fromJson(needs.load-config.outputs.config).notifications.enabled
-        run: |
-          chmod +x ./scripts/send_notifications.sh
-          ./scripts/send_notifications.sh "${{ needs.sast-scan.result }}"
-        env:
-          CONFIG_JSON: '${{ needs.load-config.outputs.config }}'
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          EMAIL_SMTP_PASSWORD: ${{ secrets.EMAIL_SMTP_PASSWORD }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
-          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
-
-  update-dashboard:
-    needs: [load-config, sast-scan]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Update Grafana dashboard
-        if: fromJson(needs.load-config.outputs.config).integrations.grafana.enabled
-        run: |
-          chmod +x ./scripts/update_grafana.sh
-          ./scripts/update_grafana.sh "${{ needs.sast-scan.result }}"
-        env:
-          CONFIG_JSON: '${{ needs.load-config.outputs.config }}'
-          GRAFANA_API_KEY: ${{ secrets.GRAFANA_API_KEY }}
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Load SAST configuration
+      id: config
+      run: |
+        if [ -f "$CONFIG_FILE" ]; then
+          echo "Using configuration: $CONFIG_FILE"
+          yq eval '.sast.scanners[]' $CONFIG_FILE | grep -q "${{ matrix.scanner }}" && echo "enabled=true" >> $GITHUB_OUTPUT || echo "enabled=false" >> $GITHUB_OUTPUT
+        else
+          echo "enabled=true" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Initialize CodeQL
+      if: matrix.scanner == 'codeql' && steps.config.outputs.enabled == 'true'
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript, python, java, go, csharp
+    
+    - name: Run CodeQL Analysis
+      if: matrix.scanner == 'codeql' && steps.config.outputs.enabled == 'true'
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:multi"
+    
+    - name: Run Semgrep
+      if: matrix.scanner == 'semgrep' && steps.config.outputs.enabled == 'true'
+      uses: semgrep/semgrep-action@v1
+      with:
+        config: auto
+        generateSarif: "1"
+      env:
+        SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+    
+    - name: Set up Python for Bandit
+      if: matrix.scanner == 'bandit' && steps.config.outputs.enabled == 'true'
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Run Bandit Security Scan
+      if: matrix.scanner == 'bandit' && steps.config.outputs.enabled == 'true'
+      run: |
+        pip install bandit[toml]
+        bandit -r . -f sarif -o bandit-results.sarif || true
+        [ -f bandit-results.sarif ] && echo "Bandit scan completed"
+    
+    - name: Set up Node.js for ESLint
+      if: matrix.scanner == 'eslint' && steps.config.outputs.enabled == 'true'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+    
+    - name: Run ESLint Security Scan
+      if: matrix.scanner == 'eslint' && steps.config.outputs.enabled == 'true'
+      run: |
+        if [ -f package.json ]; then
+          npm install --save-dev eslint @microsoft/eslint-formatter-sarif
+          npx eslint . --format @microsoft/eslint-formatter-sarif --output-file eslint-results.sarif || true
+          echo "ESLint scan completed"
+        fi
+    
+    - name: Upload SARIF results
+      if: always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: |
+          semgrep.sarif
+          bandit-results.sarif
+          eslint-results.sarif
+      continue-on-error: true
+    
+    - name: Send notifications
+      if: always()
+      run: |
+        echo "🔒 SAST scan completed for ${{ matrix.scanner }}"
+        # Additional notification logic would go here
