@@ -127,7 +127,8 @@ SAST/
 ├── 📄 Core Configuration
 │   ├── ci-config.yaml                 # Central configuration file
 │   ├── CONFIG_GUIDE.md                # Configuration documentation
-│   └── quick-deploy.sh                # One-command deployment
+│   ├── setup.sh                       # One-command deployment
+│   └── sast-init.sh                   # Advanced project initialization
 │
 ├── 🗂️ CI/CD Workflows (.github/workflows/)
 │   ├── sast-security-scan.yml         # Main SAST scanning workflow
@@ -193,7 +194,8 @@ Monitoring Stack:
 
 Developer Experience:
   - run_demo.sh: Interactive demo mode
-  - quick-deploy.sh: One-command setup
+  - setup.sh: One-command deployment with multiple modes
+  - sast-init.sh: Advanced project initialization
   - test_real_repo.sh: Live repository testing
 ```
 

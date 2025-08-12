@@ -30,7 +30,7 @@ SMTP_PORT=""
 SMTP_TLS=""
 PROVIDER=""
 TEST_RECIPIENT=""
-CONFIG_FILE="ci-config-generated.yaml"
+CONFIG_FILE="ci-config.yaml"
 
 # Provider configurations (compatible with older bash versions)
 get_provider_config() {
@@ -282,7 +282,7 @@ def test_email():
         If you received this email, your email notifications are working correctly!
         
         Next steps:
-        1. Configure notification thresholds in ci-config-generated.yaml
+        1. Configure notification thresholds in ci-config.yaml
         2. Set up team notification channels
         3. Test with a real security scan
         
@@ -313,7 +313,7 @@ def test_email():
             
             <h3>Next steps:</h3>
             <ol>
-              <li>Configure notification thresholds in <code>ci-config-generated.yaml</code></li>
+              <li>Configure notification thresholds in <code>ci-config.yaml</code></li>
               <li>Set up team notification channels</li>
               <li>Test with a real security scan</li>
             </ol>
@@ -560,7 +560,7 @@ on:
   workflow_dispatch:
 
 env:
-  CONFIG_FILE: ci-config-generated.yaml
+  CONFIG_FILE: ci-config.yaml
 
 jobs:
   security-scan:

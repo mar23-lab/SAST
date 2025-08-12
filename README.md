@@ -58,8 +58,11 @@ docker-compose -f docker-compose-universal.yml up -d
 
 #### 🛠️ Custom Setup (Interactive)
 ```bash
-# Professional onboarding wizard
-./scripts/enhanced-onboarding-wizard.sh
+# Interactive project setup
+./sast-init.sh --interactive
+
+# Quick project setup
+./setup.sh --quick --project "MyApp" --email "me@company.com"
 
 # Email setup wizard (5-minute configuration)
 ./scripts/email-setup-wizard.sh
@@ -189,10 +192,12 @@ jobs:
 
 ## 📚 Documentation
 
+- **[Complete Documentation](docs/)** - Comprehensive guides and references
 - **[Configuration Guide](CONFIG_GUIDE.md)** - Detailed setup and customization
 - **[Architecture Overview](docs/ARCHITECTURE.md)** - System design and components
 - **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
-- **[Historical Analysis](archive/)** - Competitive analysis and validation results
+- **[Enterprise Setup](docs/guides/enterprise-setup.md)** - Large organization deployment
+- **[GitHub Pages Setup](docs/guides/github-pages-setup.md)** - Deploy security dashboard
 
 ## 🎯 Use Cases
 

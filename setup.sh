@@ -17,8 +17,46 @@ CYAN='\033[0;36m'
 PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
-DEPLOYMENT_MODE="${1:-demo}"
+# Default values
+DEPLOYMENT_MODE="demo"
+PROJECT_NAME=""
+EMAIL=""
+QUICK_MODE=false
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Parse command line arguments
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --demo|--production|--minimal)
+                DEPLOYMENT_MODE="${1#--}"
+                shift
+                ;;
+            --quick)
+                DEPLOYMENT_MODE="quick"
+                QUICK_MODE=true
+                shift
+                ;;
+            --project)
+                PROJECT_NAME="$2"
+                shift 2
+                ;;
+            --email)
+                EMAIL="$2"
+                shift 2
+                ;;
+            --help)
+                show_usage
+                exit 0
+                ;;
+            *)
+                log_error "Unknown option: $1"
+                show_usage
+                exit 1
+                ;;
+        esac
+    done
+}
 
 # Banner
 show_banner() {
@@ -40,17 +78,24 @@ EOF
 show_usage() {
     cat << EOF
 ${CYAN}USAGE:${NC}
-    ./setup.sh [MODE]
+    ./setup.sh [MODE] [OPTIONS]
 
 ${CYAN}MODES:${NC}
     --demo        Demo environment (default)
     --production  Production deployment
     --minimal     Minimal services only
+    --quick       Quick interactive setup for new projects
+
+${CYAN}OPTIONS:${NC}
+    --project NAME    Project name (for quick mode)
+    --email EMAIL     Contact email (for quick mode)
+    --help           Show this help
 
 ${CYAN}EXAMPLES:${NC}
-    ./setup.sh --demo        # Safe testing environment
-    ./setup.sh --production  # Full production setup
-    ./setup.sh --minimal     # Essential services only
+    ./setup.sh --demo                                    # Safe testing environment
+    ./setup.sh --production                              # Full production setup
+    ./setup.sh --minimal                                 # Essential services only
+    ./setup.sh --quick --project "MyApp" --email "me@company.com"  # Quick project setup
 
 EOF
 }
@@ -336,6 +381,96 @@ EOF
     log_success "Access information saved to ACCESS_INFO.md"
 }
 
+# Quick mode setup for new projects
+setup_quick_mode() {
+    log_step "Starting quick project setup..."
+    
+    # Get project info if not provided
+    if [[ -z "$PROJECT_NAME" ]]; then
+        DEFAULT_PROJECT_NAME=$(basename "$(pwd)")
+        read -p "Project name [$DEFAULT_PROJECT_NAME]: " PROJECT_NAME
+        PROJECT_NAME=${PROJECT_NAME:-$DEFAULT_PROJECT_NAME}
+    fi
+    
+    if [[ -z "$EMAIL" ]]; then
+        read -p "Your email [user@example.com]: " EMAIL
+        EMAIL=${EMAIL:-"user@example.com"}
+    fi
+    
+    echo ""
+    log_info "Configuration Summary:"
+    echo "  Project: $PROJECT_NAME"
+    echo "  Email: $EMAIL"
+    echo "  Features: GitHub Actions, Dashboard, Notifications"
+    echo ""
+    
+    read -p "Continue with setup? (y/N): " CONFIRM
+    if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
+        log_warning "Setup cancelled."
+        exit 0
+    fi
+    
+    # Create basic project structure
+    log_step "Creating project structure..."
+    mkdir -p .github/workflows
+    
+    # Generate customized configuration
+    log_step "Generating configuration..."
+    cp ci-config.yaml "${PROJECT_NAME}-config.yaml"
+    
+    # Update configuration with project details
+    if command -v sed >/dev/null 2>&1; then
+        sed -i.bak "s/CI-SAST-Boilerplate/$PROJECT_NAME/g" "${PROJECT_NAME}-config.yaml"
+        sed -i.bak "s/devops@company.com/$EMAIL/g" "${PROJECT_NAME}-config.yaml"
+        rm "${PROJECT_NAME}-config.yaml.bak" 2>/dev/null || true
+    fi
+    
+    # Create basic GitHub Actions workflow
+    cat > .github/workflows/sast-security-scan.yml << EOF
+name: SAST Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  sast-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run Security Scan
+      uses: ./.github/workflows/sast-security-scan.yml
+      env:
+        PROJECT_NAME: $PROJECT_NAME
+        CONTACT_EMAIL: $EMAIL
+EOF
+
+    log_success "Quick setup completed!"
+    echo ""
+    echo "Next steps:"
+    echo "1. Commit the generated files:"
+    echo "   git add ."
+    echo "   git commit -m 'Add SAST security scanning'"
+    echo ""
+    echo "2. Push to enable GitHub Actions:"
+    echo "   git push origin main"
+    echo ""
+    echo "3. Configure secrets in GitHub (optional):"
+    echo "   - SLACK_WEBHOOK for Slack notifications"
+    echo "   - EMAIL_SMTP_PASSWORD for email alerts"
+    echo ""
+    echo "4. Run full platform setup when ready:"
+    echo "   ./setup.sh --demo"
+}
+
 # Cleanup function
 cleanup_on_error() {
     log_error "Setup failed. Cleaning up..."
@@ -348,16 +483,17 @@ main() {
     # Set error handler
     trap cleanup_on_error ERR
     
-    # Parse arguments
-    if [[ "${1:-}" =~ ^(-h|--help)$ ]]; then
-        show_usage
-        exit 0
-    fi
-    
-    DEPLOYMENT_MODE="${1:-demo}"
+    # Parse command line arguments
+    parse_args "$@"
     
     # Show banner
     show_banner
+    
+    # Handle quick mode separately
+    if [[ "$QUICK_MODE" == "true" ]]; then
+        setup_quick_mode
+        return 0
+    fi
     
     log_info "Starting SAST Platform setup in $DEPLOYMENT_MODE mode..."
     echo ""

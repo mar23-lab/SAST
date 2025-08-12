@@ -1,187 +1,132 @@
-# 🔒 SAST Security Dashboard - Live Demo
+y# 📚 SAST Platform Documentation
 
-Welcome to the **Universal SAST Boilerplate** live demo dashboard!
+Welcome to the comprehensive documentation for the Universal SAST (Static Application Security Testing) Platform.
 
-## 🌐 Live Demo
+## 🚀 Quick Start
 
-**Access the live dashboard**: [https://mar23-lab.github.io/SAST](https://mar23-lab.github.io/SAST)
+New to SAST? Start here:
 
-## 📊 What You'll See
+1. **[Main README](../README.md)** - Overview and quick setup
+2. **[Architecture Overview](ARCHITECTURE.md)** - Understanding the system
+3. **[Configuration Guide](CONFIG_GUIDE.md)** - Detailed configuration options
+4. **[Troubleshooting](TROUBLESHOOTING.md)** - Common issues and solutions
 
-This demo showcases a fully functional security dashboard with:
+## 📖 Documentation Structure
 
-### 🎯 **Real-time Security Metrics**
-- **Critical**: 0 vulnerabilities (immediate action required)
-- **High**: 3 vulnerabilities (address within 24h)
-- **Medium**: 7 vulnerabilities (plan remediation)
-- **Low**: 12 vulnerabilities (monitor & track)
+### Core Documentation
+| Document | Purpose | Audience |
+|----------|---------|----------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Technical architecture and design principles | Developers, DevOps |
+| [CONFIG_GUIDE.md](CONFIG_GUIDE.md) | Complete configuration reference | All users |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Issue resolution and support | All users |
 
-### 📈 **Interactive Charts**
-- **Security Trends**: 30-day vulnerability trends across all severity levels
-- **Scanner Distribution**: Visual breakdown of issues found by each scanner
+### Setup Guides
+| Guide | Purpose | Use Case |
+|-------|---------|----------|
+| [GitHub Pages Setup](guides/github-pages-setup.md) | Deploy security dashboard | Teams wanting public dashboards |
+| [Enterprise Setup](guides/enterprise-setup.md) | Large organization deployment | Enterprise environments |
+| [Email Setup](guides/email-setup.md) | Configure notification system | Teams needing alerts |
 
-### 🛡️ **Active Security Scanners**
-- **CodeQL**: GitHub's semantic code analysis (5 issues, 2m 34s runtime)
-- **Semgrep**: Fast pattern-based analysis (8 issues, 1m 12s runtime)
-- **Bandit**: Python security linter (4 issues, 45s runtime)
-- **ESLint Security**: JavaScript/TypeScript security rules (5 issues, 1m 8s runtime)
+### Additional Resources
+| Resource | Description |
+|----------|-------------|
+| [Demo Data](data.json) | Sample data for testing |
+| [Interactive Dashboard](index.html) | Live demo dashboard |
+| [Enterprise Dashboard](enterprise-dashboard.html) | Enterprise demo |
 
-### 📊 **Recent Activity**
-Live feed of security events including:
-- Completed SAST scans
-- Newly detected vulnerabilities
-- Resolved security issues
-- Dashboard updates
+## 🎯 Getting Started by Role
 
-## 🧪 Demo Features
+### Developers
+1. Clone repository and run `./setup.sh --demo`
+2. Review [Configuration Guide](CONFIG_GUIDE.md) for customization
+3. Check [Troubleshooting](TROUBLESHOOTING.md) for common issues
 
-### **Mock Data**
-This demo uses realistic mock data to demonstrate:
-- Real-world vulnerability patterns
-- Typical scanner performance metrics
-- Common security event workflows
-- Professional dashboard presentation
+### DevOps Engineers  
+1. Review [Architecture Overview](ARCHITECTURE.md)
+2. Plan deployment using [Enterprise Setup](guides/enterprise-setup.md)
+3. Configure monitoring and alerts
 
-### **Interactive Elements**
-- Click on metric cards for details
-- Hover over charts for specific data points
-- Live refresh functionality (updates every 5 minutes)
-- Responsive design for mobile and desktop
+### Security Teams
+1. Understand scanner capabilities in [Main README](../README.md)
+2. Configure compliance requirements using [Configuration Guide](CONFIG_GUIDE.md)
+3. Set up enterprise dashboards with [GitHub Pages Setup](guides/github-pages-setup.md)
 
-### **Visual Design**
-- Professional GitHub-style interface
-- Color-coded severity levels
-- Animated counters and loading states
-- Live indicators showing real-time updates
+### Management
+1. View [Live Demo Dashboard](https://mar23-lab.github.io/SAST)
+2. Review business benefits in [Main README](../README.md)
+3. Plan enterprise rollout with [Enterprise Setup](guides/enterprise-setup.md)
 
-## 🚀 Getting Started
+## 🔧 Platform Capabilities
 
-### **For Your Project**
+### SAST Scanners
+- **CodeQL**: GitHub's semantic analysis
+- **Semgrep**: Fast pattern-based scanning
+- **Bandit**: Python security linter
+- **ESLint**: JavaScript/TypeScript security
 
-1. **Use the One-Command Setup**:
-   ```bash
-   ./sast-init.sh --project "Your Project" --features "github_pages"
-   ```
+### Monitoring & Dashboards
+- **Grafana**: Real-time security dashboards
+- **InfluxDB**: Time-series metrics storage
+- **Prometheus**: Metrics collection and alerting
 
-2. **Enable GitHub Pages**:
-   - Go to your repository Settings > Pages
-   - Source: GitHub Actions
-   - Save settings
+### Integrations
+- **GitHub Actions**: Native CI/CD workflows
+- **Slack**: Real-time notifications
+- **Jira**: Automatic ticket creation
+- **Email**: SMTP notification system
 
-3. **Push and Deploy**:
-   ```bash
-   git add .
-   git commit -m "Add SAST security dashboard"
-   git push origin main
-   ```
+## 📊 Quick Reference
 
-4. **Access Your Dashboard**:
-   Your dashboard will be available at: `https://[username].github.io/[repository]`
+### Essential Commands
+```bash
+# Quick setup
+./setup.sh --demo
 
-## 🔧 Customization
+# Production deployment
+./setup.sh --production
 
-### **Branding**
-Replace these variables in your dashboard:
-- `{{COMPANY_NAME}}` - Your company name
-- `{{CONTACT_EMAIL}}` - Security contact email
-- `{{GITHUB_REPO_URL}}` - Your repository URL
+# Project initialization
+./sast-init.sh --interactive
 
-### **Data Integration**
-The dashboard can integrate with:
-- GitHub Security API
-- Custom security data endpoints
-- CI/CD pipeline results
-- Third-party security tools
+# Run demo scan
+./run_demo.sh
+```
 
-### **Styling**
-Customize the appearance by modifying:
-- CSS variables in the `<style>` section
-- Color schemes for different severity levels
-- Layout and component positioning
-- Chart types and configurations
+### Key Configuration Files
+- **ci-config.yaml** - Master configuration
+- **docker-compose.yml** - Full monitoring stack
+- **docker-compose-minimal.yml** - Essential services only
 
-## 📱 Mobile Support
+### Important URLs (after setup)
+- **Grafana Dashboard**: http://localhost:3001
+- **InfluxDB UI**: http://localhost:8087
+- **Prometheus**: http://localhost:9090
+- **Email Testing**: http://localhost:8025
 
-The dashboard is fully responsive and works on:
-- Desktop browsers (Chrome, Firefox, Safari, Edge)
-- Mobile devices (iOS, Android)
-- Tablet devices
-- Different screen resolutions
+## 🆘 Getting Help
 
-## 🔄 Real-time Updates
+### Documentation Issues
+1. Check [Troubleshooting Guide](TROUBLESHOOTING.md)
+2. Review [Configuration Guide](CONFIG_GUIDE.md)
+3. Search [GitHub Issues](https://github.com/mar23-lab/SAST/issues)
 
-The demo includes:
-- **Auto-refresh**: Data updates every 5 minutes
-- **Live indicators**: Pulsing dots show active monitoring
-- **Interactive refresh**: Click "Refresh Data" for immediate updates
-- **Animated transitions**: Smooth counter animations and chart updates
+### Community Support
+- **GitHub Discussions**: Ask questions and share solutions
+- **Issue Tracker**: Report bugs and request features
+- **Documentation**: Contribute improvements
 
-## 🎯 Use Cases
+### Enterprise Support
+- **Professional Services**: Implementation assistance
+- **Training Programs**: Team education
+- **Custom Development**: Tailored solutions
 
-This dashboard is perfect for:
+## 🔄 Keep Updated
 
-### **Security Teams**
-- Monitor vulnerability trends
-- Track remediation progress
-- Present security posture to stakeholders
-- Identify security hotspots
-
-### **Development Teams**
-- See immediate security feedback
-- Understand code quality impact
-- Track improvement over time
-- Integrate security into workflows
-
-### **Management & Executives**
-- High-level security overview
-- Executive reporting
-- Compliance demonstrations
-- Risk assessment presentations
-
-## 🏆 Benefits
-
-### **Professional Presentation**
-- Enterprise-grade visual design
-- Real-time data visualization
-- Mobile-responsive interface
-- Professional branding options
-
-### **Easy Integration**
-- One-command setup with SAST boilerplate
-- Automatic GitHub Pages deployment
-- No server maintenance required
-- Integrates with existing CI/CD
-
-### **Cost Effective**
-- Free GitHub Pages hosting
-- No additional infrastructure costs
-- Scales automatically with traffic
-- No maintenance overhead
-
-## 📞 Support
-
-### **Documentation**
-- [SAST Setup Guide](../GITHUB_PAGES_TESTING_GUIDE.md)
-- [One-Command Setup](../sast-init.sh)
-- [Architecture Overview](../docs/ARCHITECTURE.md)
-- [Troubleshooting Guide](../docs/TROUBLESHOOTING.md)
-
-### **Repository**
-- **Source Code**: [GitHub Repository](https://github.com/mar23-lab/SAST)
-- **Issues**: [Report Issues](https://github.com/mar23-lab/SAST/issues)
-- **Contributions**: [Contributing Guide](https://github.com/mar23-lab/SAST/blob/main/CONTRIBUTING.md)
-
-## 🎉 Ready to Deploy?
-
-This demo shows what your security dashboard will look like once deployed. The combination of professional design, real-time data, and easy setup makes it perfect for any organization looking to improve their security visibility.
-
-**Next Steps:**
-1. ⭐ Star the repository
-2. 🍴 Fork for your organization
-3. 🚀 Deploy your own dashboard
-4. 📊 Start monitoring your security posture
+- **Star the repository** for updates
+- **Watch releases** for new features
+- **Follow documentation** for best practices
+- **Contribute feedback** for improvements
 
 ---
 
-**Powered by [Universal SAST Boilerplate](https://github.com/mar23-lab/SAST)**  
-*Enterprise security made simple*
+**🎯 Ready to secure your applications?** Choose your path above and start building enterprise-grade security into your development workflow today!
