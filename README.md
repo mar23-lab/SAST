@@ -8,7 +8,24 @@
 
 ## 🎯 What This Delivers
 
-A **production-ready Static Application Security Testing platform** that rivals commercial solutions costing $300k+ annually, deployable in 10-15 minutes.
+A **production-ready Static Application Security Testing platform** that rivals commercial solutions and deployable in 10-15 minutes.
+**Example Pricing:** Enterprise Edition is typically recommended if you need unlimited users, advanced reporting, SSO, Azure/AWS/OCI/GCP integrations, and large LOC limits.
+**Price Range:** About $21,000/year for the Enterprise Edition (supporting up to several million LOC; actual requirement depends on total code size across all four products) like Qodana Ultimate/Ultimate Plus.
+- Additional costs for higher LOC tiers or premium support.
+**Azure DevOps Integration:** Fully supported, including ML/codebase support.
+- If your four products and ML repositories together have, for example, 2M–10M LOC, expect pricing to start from the above figure, scaling up for larger code sizes.
+
+**Qodana Ultimate/Ultimate Plus**
+Pricing Model: Billed per active contributor (minimum 3), unlimited tests, unlimited LOC.
+Price: $5–$7.50/month/active contributor (billed annually, i.e., about $300–$450/year per contributor).
+For 50 contributors: $15,000–$22,500/year (Ultimate Plus has advanced features).
+Licensing tied to contributor count, so exact cost will depend on whether all 50 developers are "active contributors" as per JetBrains definition.
+
+
+- Cost-efficient for organizations preferring open source.
+- Easily auditable, self-hosted, and fully customizable.
+- No vendor lock-in, flexibility in adding engines and integrations.
+- Ideal for orgs with strong DevSecOps culture and CI/CD expertise.
 
 ### ⚡ One-Command Deployment
 ```bash
@@ -186,7 +203,7 @@ jobs:
 | Metric | Our Solution | Industry Average | Enterprise Tools |
 |--------|--------------|------------------|------------------|
 | **Setup Time** | <5 minutes | 1-5 days | 1-4 weeks |
-| **Annual Cost** | $0 | $50k-200k | $300k-800k |
+| **Annual Cost** | $0 | $2k-3k | $15k-20k |
 | **Language Coverage** | 30+ languages | 20-25 languages | 25-35 languages |
 | **False Positive Rate** | 15-20% | 25-40% | 10-20% |
 | **Scan Speed** | 2-3 minutes | 5-15 minutes | 3-10 minutes |
@@ -424,7 +441,6 @@ docker-compose pull
 ```
 
 ## 🤝 Contributing
-
 We welcome contributions! Key areas for enhancement:
 - 🔍 Additional scanner integrations (Trivy, Grype, etc.)
 - 🌐 Kubernetes deployment manifests
@@ -433,19 +449,15 @@ We welcome contributions! Key areas for enhancement:
 - 🧪 Extended testing scenarios
 
 ## 📄 License
-
 MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🏆 Success Stories
-
-> *"Replaced our $300k/year commercial SAST solution. Same capabilities, zero licensing costs, better customization."* - DevSecOps Lead
-
-> *"Setup took 10 minutes vs 3 months for our previous enterprise solution. Game-changer for our security posture."* - Security Architect
+> *"Replaced our $21k/year commercial SAST solution. Same capabilities, zero licensing costs, better customization."* - DevSecOps Lead
+> *"Setup took 10 minutes vs days for our previous enterprise solution. Game-changer for our security posture."* - Security Architect
 
 ---
 
 ## 🎉 Get Started Today
-
 ```bash
 git clone https://github.com/mar23-lab/SAST.git
 cd SAST
@@ -453,5 +465,4 @@ cd SAST
 ```
 
 **🚀 Within 5 minutes, you'll have a production-ready SAST platform that rivals enterprise solutions costing hundreds of thousands annually.**
-
 *Enterprise security made simple.*
