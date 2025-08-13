@@ -41,9 +41,10 @@ jobs:
       
       - name: Parse environment-specific config
         id: parse-env-config
+        env:
+          ENV_NAME: ${{ github.event.inputs.environment || 'development' }}
         run: |
-          env_name="${{ github.event.inputs.environment || 'development' }}"
-          env_config=$(cat ci-config.yaml | yq ".environments.$env_name" -o=json)
+          env_config=$(cat ci-config.yaml | yq ".environments.$ENV_NAME" -o=json)
           echo "env_config=$env_config" >> $GITHUB_OUTPUT
 
   build-and-test:
