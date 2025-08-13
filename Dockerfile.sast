@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-# Install basic dependencies
+# Install basic dependencies including SMTP tools
 RUN apt-get update && apt-get install -y \
     curl \
     wget \
@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     gnupg \
     lsb-release \
+    ssmtp \
+    mailutils \
     && rm -rf /var/lib/apt/lists/*
 
 # Install yq for YAML processing
@@ -27,12 +29,14 @@ RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /
     && apt-get install -y docker-ce-cli \
     && rm -rf /var/lib/apt/lists/*
 
-# Install security tools
+# Install security tools and email dependencies
 RUN pip3 install --no-cache-dir \
     bandit \
     semgrep \
     safety \
-    influxdb-client
+    influxdb-client \
+    smtplib-ssl \
+    email-validator
 
 # Install ESLint and security plugins
 RUN npm install -g \

@@ -1,0 +1,211 @@
+# SAST Platform - Stable Multi-Platform Docker Compose Configuration
+# Optimized for ARM64/M1/M2 Macs and production stability
+
+services:
+  # InfluxDB - Time series database for metrics (Stable Configuration)
+  sast-influxdb-stable:
+    image: influxdb:2.7
+    platform: linux/amd64  # Explicit platform for compatibility
+    container_name: sast-influxdb-stable
+    ports:
+      - "8087:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=adminpass123
+      - DOCKER_INFLUXDB_INIT_ORG=sast-org
+      - DOCKER_INFLUXDB_INIT_BUCKET=sast-metrics
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=sast-admin-token-12345
+    volumes:
+      - sast-influxdb-data-stable:/var/lib/influxdb2
+      # Removed problematic config mount to prevent permission issues
+    networks:
+      - sast-network-stable
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    restart: unless-stopped
+
+  # Grafana - Dashboard for visualization (Stable Version)
+  sast-grafana-stable:
+    image: grafana/grafana:9.5.0  # Stable version for ARM64 compatibility
+    platform: linux/amd64  # Explicit platform for M1/M2 Macs
+    container_name: sast-grafana-stable
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_SECURITY_DISABLE_GRAVATAR=true
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=  # Start with no plugins for stability
+    volumes:
+      - sast-grafana-data-stable:/var/lib/grafana
+      - ./grafana-config/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana-config/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      sast-influxdb-stable:
+        condition: service_healthy
+    networks:
+      - sast-network-stable
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    restart: unless-stopped
+
+  # Prometheus - Metrics collection (Stable Configuration)
+  sast-prometheus-stable:
+    image: prom/prometheus:v2.47.0
+    platform: linux/amd64
+    container_name: sast-prometheus-stable
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    volumes:
+      - sast-prometheus-data-stable:/prometheus
+      - ./prometheus-config:/etc/prometheus:ro
+    networks:
+      - sast-network-stable
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+    restart: unless-stopped
+
+  # Pushgateway - For pushing metrics to Prometheus
+  sast-pushgateway-stable:
+    image: prom/pushgateway:v1.6.2
+    platform: linux/amd64
+    container_name: sast-pushgateway-stable
+    ports:
+      - "9091:9091"
+    networks:
+      - sast-network-stable
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    restart: unless-stopped
+
+  # MailHog - For testing email notifications
+  sast-mailhog-stable:
+    image: mailhog/mailhog:v1.0.1
+    platform: linux/amd64
+    container_name: sast-mailhog-stable
+    ports:
+      - "1025:1025"  # SMTP server
+      - "8025:8025"  # Web UI
+    environment:
+      - MH_STORAGE=maildir
+      - MH_MAILDIR_PATH=/maildir
+    volumes:
+      - sast-mailhog-data-stable:/maildir
+    networks:
+      - sast-network-stable
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: '0.25'
+    restart: unless-stopped
+
+  # SAST Scanner Service - Main service for running scans
+  sast-runner-stable:
+    build:
+      context: .
+      dockerfile: Dockerfile.sast
+      platforms:
+        - linux/amd64
+    platform: linux/amd64
+    container_name: sast-runner-stable
+    environment:
+      - CONFIG_JSON_FILE=/app/ci-config.yaml
+      - INFLUXDB_URL=http://sast-influxdb-stable:8086
+      - INFLUXDB_TOKEN=sast-admin-token-12345
+      - INFLUXDB_ORG=sast-org
+      - INFLUXDB_BUCKET=sast-metrics
+      - GRAFANA_URL=http://sast-grafana-stable:3000
+      - GRAFANA_API_KEY=admin123
+      - PROMETHEUS_PUSHGATEWAY=sast-pushgateway-stable:9091
+      - EMAIL_SMTP_SERVER=sast-mailhog-stable
+      - EMAIL_SMTP_PORT=1025
+      - EMAIL_SMTP_USER=test@sast.local
+      - EMAIL_SMTP_PASSWORD=testpass
+      - DEMO_MODE=true
+      - PLATFORM=stable
+    volumes:
+      - .:/app:ro  # Read-only mount for security
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - sast-results-stable:/app/sast-results
+    depends_on:
+      sast-influxdb-stable:
+        condition: service_healthy
+      sast-grafana-stable:
+        condition: service_healthy
+      sast-prometheus-stable:
+        condition: service_healthy
+      sast-mailhog-stable:
+        condition: service_healthy
+    networks:
+      - sast-network-stable
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+    restart: unless-stopped
+
+volumes:
+  sast-influxdb-data-stable:
+    driver: local
+  sast-grafana-data-stable:
+    driver: local
+  sast-prometheus-data-stable:
+    driver: local
+  sast-mailhog-data-stable:
+    driver: local
+  sast-results-stable:
+    driver: local
+
+networks:
+  sast-network-stable:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
