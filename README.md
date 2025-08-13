@@ -8,7 +8,7 @@
 
 ## 🎯 What This Delivers
 
-A **production-ready Static Application Security Testing platform** that rivals commercial solutions costing $300k+ annually, deployable in under 5 minutes.
+A **production-ready Static Application Security Testing platform** that rivals commercial solutions costing $300k+ annually, deployable in 10-15 minutes.
 
 ### ⚡ One-Command Deployment
 ```bash
@@ -16,11 +16,12 @@ git clone https://github.com/mar23-lab/SAST.git && cd SAST && ./setup.sh
 ```
 
 ### 🎉 Immediate Results
-- **Real-time security dashboards** in under 5 minutes
+- **Real-time security dashboards** in 10-15 minutes
 - **Multi-scanner analysis** with 4 integrated SAST engines
 - **Advanced monitoring** with InfluxDB + Prometheus + Grafana
 - **Smart notifications** via Email, Slack, Jira, Teams
 - **Demo mode** for safe testing and validation
+- **Automated platform detection** for ARM64/M1/M2 compatibility
 
 ## 🚀 Quick Start
 
@@ -221,29 +222,205 @@ jobs:
 
 ## 🛠️ Troubleshooting
 
-### Common Issues
+### ⏱️ **Realistic Setup Times**
+- **First-time setup**: 10-15 minutes (not 5 minutes)
+- **ARM64/M1 Macs**: 15-20 minutes (includes compatibility fixes)
+- **Production config**: 20-30 minutes (including security hardening)
+- **Troubleshooting time**: Add 15-30 minutes for first-time users
+
+### 🔧 **Platform-Specific Issues**
+
+#### **ARM64/Apple Silicon (M1/M2)**
 ```bash
-# Port conflicts
-lsof -i :3001 -i :8087 -i :9090
+# Use stable configuration
+./setup.sh --demo  # Automatically detects and uses docker-compose-stable.yml
 
-# Service health check
-docker-compose ps
+# Manual platform override
+export DOCKER_DEFAULT_PLATFORM=linux/amd64
+docker-compose -f docker-compose-stable.yml up -d
 
-# View logs
-docker-compose logs [service]
-
-# Reset and rebuild
-docker-compose down -v && docker-compose up -d
+# If Grafana fails to start
+docker-compose down
+docker-compose -f docker-compose-stable.yml up -d
 ```
 
-### No Dashboard Data
+#### **x86_64/Intel Systems**
 ```bash
-# Send test metrics
-docker exec -it sast-runner ./scripts/influxdb_integration.sh success
+# Standard configuration works best
+./setup.sh --demo  # Uses docker-compose.yml
 
-# Verify connectivity
-curl -H "Authorization: Token sast-admin-token-12345" \
-     "http://localhost:8087/api/v2/query?org=sast-org"
+# For Ubuntu/Linux
+sudo apt-get update && sudo apt-get install -y jq curl
+```
+
+### 🐳 **Docker Issues**
+
+#### **Grafana Plugin Errors**
+```bash
+# Error: Plugin not found (ARM64 issue)
+# Solution: Already fixed in docker-compose-stable.yml
+# Manual fix: Remove GF_INSTALL_PLUGINS environment variable
+```
+
+#### **InfluxDB Permission Errors**
+```bash
+# Error: Read-only file system
+# Solution: Use named volumes instead of direct mounts
+docker volume ls | grep sast  # Check volumes exist
+docker-compose down -v && docker-compose up -d  # Recreate volumes
+```
+
+#### **Port Conflicts**
+```bash
+# Check what's using ports
+lsof -i :3001 -i :8087 -i :9090 -i :9091 -i :8025 -i :1025
+
+# Kill conflicting processes
+sudo lsof -ti:3001 | xargs sudo kill -9
+
+# Use alternative ports (modify docker-compose.yml)
+```
+
+### 📊 **Grafana Dashboard Issues**
+
+#### **No Data in Dashboards**
+```bash
+# Run automated Grafana setup
+./scripts/grafana-auto-setup.sh
+
+# Manual data source creation
+curl -X POST -H "Content-Type: application/json" \
+  -u admin:admin123 http://localhost:3001/api/datasources \
+  -d '{"name":"InfluxDB-SAST","type":"influxdb","url":"http://sast-influxdb:8086"}'
+
+# Send test metrics
+docker exec sast-runner ./scripts/influxdb_integration.sh demo
+```
+
+#### **Dashboard Import Failures**
+```bash
+# Check Grafana logs
+docker-compose logs grafana
+
+# Reset Grafana data
+docker-compose down
+docker volume rm sast_grafana-data
+docker-compose up -d grafana
+```
+
+### 📧 **Email Integration Issues**
+
+#### **Email Dependencies Missing**
+```bash
+# Error: ssmtp: command not found
+# Solution: Already fixed in updated Dockerfile.sast
+# Manual fix: Install SMTP tools in container
+docker exec -it sast-runner apt-get update
+docker exec -it sast-runner apt-get install -y ssmtp mailutils
+```
+
+#### **Email Testing**
+```bash
+# Use MailHog for testing
+echo "Test email" | docker exec -i sast-runner mail -s "Test" test@example.com
+# Check: http://localhost:8025
+
+# Python SMTP alternative (already implemented)
+docker exec sast-runner python3 scripts/send_test_email.py
+```
+
+### 🔍 **Service Health Checks**
+
+#### **Comprehensive Health Check**
+```bash
+# Run platform validation
+./scripts/platform-validation.sh
+
+# Check all services
+docker-compose ps
+
+# Test connectivity
+curl -f http://localhost:3001/api/health    # Grafana
+curl -f http://localhost:8087/health        # InfluxDB  
+curl -f http://localhost:9090/-/healthy     # Prometheus
+curl -f http://localhost:8025/api/v1/events # MailHog
+```
+
+#### **Integration Testing**
+```bash
+# Run comprehensive integration test
+./scripts/integration-tester.sh
+
+# Test SAST functionality
+./run_demo.sh -s normal -c all
+
+# Verify metrics pipeline
+docker exec sast-runner ./scripts/influxdb_integration.sh success
+```
+
+### 🚨 **Emergency Recovery**
+
+#### **Complete Reset**
+```bash
+# Nuclear option - clean everything
+docker-compose down -v
+docker system prune -a -f
+./setup.sh --demo
+```
+
+#### **Partial Reset - Keep Data**
+```bash
+# Reset services but keep volumes
+docker-compose down
+docker-compose up -d
+```
+
+#### **Service-Specific Reset**
+```bash
+# Reset only Grafana
+docker-compose stop grafana
+docker-compose rm grafana
+docker-compose up -d grafana
+```
+
+### 📞 **Getting Help**
+
+#### **Log Collection**
+```bash
+# Collect all logs
+mkdir -p debug-logs
+docker-compose logs > debug-logs/all-services.log
+docker-compose ps > debug-logs/service-status.log
+./scripts/platform-validation.sh > debug-logs/platform-check.log 2>&1
+```
+
+#### **System Information**
+```bash
+# Platform details
+uname -a > debug-logs/system-info.log
+docker --version >> debug-logs/system-info.log
+docker-compose --version >> debug-logs/system-info.log
+docker info >> debug-logs/system-info.log
+```
+
+### 💡 **Performance Optimization**
+
+#### **Resource Allocation**
+```bash
+# For limited resources (< 8GB RAM)
+# Use minimal configuration
+./setup.sh --minimal
+
+# Adjust Docker resource limits in docker-compose-stable.yml
+```
+
+#### **Network Optimization**
+```bash
+# For slow internet connections
+# Pre-pull images
+docker-compose pull
+
+# Use local mirrors if available
 ```
 
 ## 🤝 Contributing
