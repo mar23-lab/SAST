@@ -159,7 +159,57 @@ check_prerequisites() {
         echo "Services will use alternative ports if needed"
     fi
     
+    # Detect platform and set appropriate configuration
+    detect_platform_configuration
+    
     log_success "Prerequisites check completed"
+}
+
+# Platform detection and configuration selection
+detect_platform_configuration() {
+    log_step "Detecting platform configuration..."
+    
+    # Run platform validation script if available
+    if [[ -f "scripts/platform-validation.sh" ]]; then
+        log_info "Running automated platform compatibility check..."
+        if bash scripts/platform-validation.sh >/dev/null 2>&1; then
+            log_success "Platform validation passed"
+        else
+            log_warning "Platform validation found potential issues"
+        fi
+    fi
+    
+    local platform_arch=$(uname -m)
+    case $platform_arch in
+        arm64|aarch64)
+            log_warning "ARM64/Apple Silicon detected"
+            log_info "Using stable configuration for better compatibility"
+            if [[ -f "docker-compose-stable.yml" ]]; then
+                export COMPOSE_FILE="docker-compose-stable.yml"
+                export DOCKER_DEFAULT_PLATFORM=linux/amd64
+                log_success "Using: docker-compose-stable.yml"
+                
+                # Add environment variables to shell profile
+                if ! grep -q "DOCKER_DEFAULT_PLATFORM" ~/.bashrc ~/.zshrc 2>/dev/null; then
+                    echo "export DOCKER_DEFAULT_PLATFORM=linux/amd64" >> ~/.bashrc 2>/dev/null || true
+                    echo "export DOCKER_DEFAULT_PLATFORM=linux/amd64" >> ~/.zshrc 2>/dev/null || true
+                fi
+            else
+                log_warning "Stable compose file not found, using standard configuration"
+                export COMPOSE_FILE="docker-compose.yml"
+            fi
+            ;;
+        x86_64)
+            log_success "x86_64 platform detected - using standard configuration"
+            export COMPOSE_FILE="docker-compose.yml"
+            ;;
+        *)
+            log_warning "Unknown architecture: $platform_arch - using standard configuration"
+            export COMPOSE_FILE="docker-compose.yml"
+            ;;
+    esac
+    
+    log_info "Selected compose file: ${COMPOSE_FILE:-docker-compose.yml}"
 }
 
 # Generate secure configuration
@@ -275,9 +325,23 @@ setup_monitoring() {
         retries=$((retries + 1))
     done
     
-    # Create InfluxDB dashboard if not exists
-    log_info "Setting up Grafana dashboards..."
+    # Automated Grafana configuration
+    log_info "Configuring Grafana dashboards automatically..."
     sleep 5  # Give Grafana more time to fully initialize
+    
+    # Run automated Grafana setup if script exists
+    if [[ -f "scripts/grafana-auto-setup.sh" ]]; then
+        log_info "Running automated Grafana configuration..."
+        if bash scripts/grafana-auto-setup.sh; then
+            log_success "Grafana configured automatically (vs 90-minute manual setup)"
+        else
+            log_warning "Automated Grafana setup failed - check logs"
+            log_info "You can run it manually: ./scripts/grafana-auto-setup.sh"
+        fi
+    else
+        log_warning "Grafana auto-setup script not found"
+        log_info "Using manual dashboard configuration"
+    fi
     
     log_success "Monitoring setup completed"
 }

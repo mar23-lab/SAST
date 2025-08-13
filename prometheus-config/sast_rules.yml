@@ -1,7 +1,7 @@
 groups:
   - name: sast_security_alerts
     rules:
-      # Алерт на критические уязвимости
+      # Alert for critical vulnerabilities
       - alert: CriticalVulnerabilitiesFound
         expr: sast_vulnerabilities_total{severity="critical"} > 0
         for: 0m
@@ -9,10 +9,10 @@ groups:
           severity: critical
           team: security
         annotations:
-          summary: "Критические уязвимости обнаружены в {{ $labels.repository }}"
-          description: "Найдено {{ $value }} критических уязвимостей в репозитории {{ $labels.repository }}"
+          summary: "Critical vulnerabilities found in {{ $labels.repository }}"
+          description: "Found {{ $value }} critical vulnerabilities in repository {{ $labels.repository }}"
 
-      # Алерт на высокоприоритетные уязвимости
+      # Alert for high-priority vulnerabilities threshold exceeded
       - alert: HighVulnerabilitiesThresholdExceeded
         expr: sast_vulnerabilities_total{severity="high"} > 5
         for: 5m
@@ -20,10 +20,10 @@ groups:
           severity: warning
           team: security
         annotations:
-          summary: "Превышен порог высокоприоритетных уязвимостей"
-          description: "Найдено {{ $value }} высокоприоритетных уязвимостей в {{ $labels.repository }} (порог: 5)"
+          summary: "High-priority vulnerabilities threshold exceeded"
+          description: "Found {{ $value }} high-priority vulnerabilities in {{ $labels.repository }} (threshold: 5)"
 
-      # Алерт на неудачное сканирование
+      # Alert for failed SAST scans
       - alert: SASTScanFailed
         expr: sast_scan_status == 0
         for: 1m
@@ -31,21 +31,21 @@ groups:
           severity: warning
           team: devops
         annotations:
-          summary: "SAST сканирование завершилось неудачно"
-          description: "Сканирование безопасности для {{ $labels.repository }} завершилось ошибкой"
+          summary: "SAST security scan failed"
+          description: "Security scan for {{ $labels.repository }} completed with errors"
 
-      # Алерт на долгое сканирование
+      # Alert for slow SAST scans
       - alert: SASTScanTooSlow
-        expr: sast_scan_duration_seconds > 1800  # 30 минут
+        expr: sast_scan_duration_seconds > 1800  # 30 minutes
         for: 0m
         labels:
           severity: info
           team: devops
         annotations:
-          summary: "SAST сканирование выполняется слишком долго"
-          description: "Сканирование {{ $labels.repository }} длится уже {{ $value }} секунд"
+          summary: "SAST scan running too long"
+          description: "Scan for {{ $labels.repository }} has been running for {{ $value }} seconds"
 
-      # Алерт на рост количества уязвимостей
+      # Alert for increasing vulnerability trend
       - alert: VulnerabilityTrendIncreasing
         expr: increase(sast_vulnerabilities_total[24h]) > 10
         for: 10m
@@ -53,5 +53,5 @@ groups:
           severity: warning
           team: security
         annotations:
-          summary: "Растущий тренд уязвимостей"
-          description: "За последние 24 часа в {{ $labels.repository }} обнаружено {{ $value }} новых уязвимостей"
+          summary: "Increasing vulnerability trend detected"
+          description: "{{ $value }} new vulnerabilities found in {{ $labels.repository }} in the last 24 hours"
